@@ -1,0 +1,3407 @@
+---
+title: "World Cup Predictor Dataset Build"
+format: pdf
+---
+
+
+
+
+```{r}
+library(tidyverse)
+library(worldcup)
+```
+
+```{r}
+# ============================================================
+# Predictor 1: Historical World Cup Win Rate Difference
+# ============================================================
+
+# Men's World Cup tournaments
+mens_tournaments <- tournaments |>
+  filter(
+    str_detect(
+      tournament_name,
+      "Men's World Cup"
+    )
+  ) |>
+  select(
+    tournament_id,
+    year,
+    start_date
+  )
+
+
+# Men's World Cup matches
+matches <- worldcup::matches |>
+  inner_join(
+    mens_tournaments,
+    by = "tournament_id"
+  ) |>
+  select(
+    tournament_id,
+    year,
+    match_id,
+    match_date,
+    home_team_code,
+    home_team_name,
+    away_team_code,
+    away_team_name,
+    home_team_score,
+    away_team_score
+  )
+
+
+# One row per team per match
+team_match_history <- bind_rows(
+
+  matches |>
+    transmute(
+      tournament_id,
+      year,
+      match_id,
+      match_date,
+      team_code = home_team_code,
+      team_name = home_team_name,
+      goals_for = home_team_score,
+      goals_against = away_team_score,
+      win = as.integer(
+        home_team_score > away_team_score
+      )
+    ),
+
+  matches |>
+    transmute(
+      tournament_id,
+      year,
+      match_id,
+      match_date,
+      team_code = away_team_code,
+      team_name = away_team_name,
+      goals_for = away_team_score,
+      goals_against = home_team_score,
+      win = as.integer(
+        away_team_score > home_team_score
+      )
+    )
+)
+
+
+# Teams appearing in each World Cup
+teams_by_tournament <- team_match_history |>
+  distinct(
+    year,
+    team_code,
+    team_name
+  )
+
+
+# Historical World Cup win rate before each tournament
+wc_win_rate_by_tournament <- map_dfr(
+  sort(unique(teams_by_tournament$year)),
+  function(target_year) {
+
+    current_teams <- teams_by_tournament |>
+      filter(year == target_year)
+
+    prior_history <- team_match_history |>
+      filter(year < target_year)
+
+    current_teams |>
+      left_join(
+        prior_history |>
+          group_by(team_code) |>
+          summarise(
+            prior_wc_matches = n(),
+            prior_wc_wins = sum(win),
+            .groups = "drop"
+          ),
+        by = "team_code"
+      ) |>
+      mutate(
+        prior_wc_matches =
+          replace_na(
+            prior_wc_matches,
+            0L
+          ),
+
+        prior_wc_wins =
+          replace_na(
+            prior_wc_wins,
+            0
+          ),
+
+        wc_win_rate = if_else(
+          prior_wc_matches > 0,
+          prior_wc_wins / prior_wc_matches,
+          0
+        )
+      ) |>
+      select(
+        year,
+        team_code,
+        wc_win_rate
+      )
+  }
+)
+
+
+# Home-team win rate
+home_wc_win_rate <- wc_win_rate_by_tournament |>
+  rename(
+    home_team_code = team_code,
+    home_wc_win_rate = wc_win_rate
+  )
+
+
+# Away-team win rate
+away_wc_win_rate <- wc_win_rate_by_tournament |>
+  rename(
+    away_team_code = team_code,
+    away_wc_win_rate = wc_win_rate
+  )
+
+
+# Add Predictor 1
+world_cup_data <- matches |>
+  left_join(
+    home_wc_win_rate,
+    by = c(
+      "year",
+      "home_team_code"
+    )
+  ) |>
+  left_join(
+    away_wc_win_rate,
+    by = c(
+      "year",
+      "away_team_code"
+    )
+  ) |>
+  mutate(
+    wc_win_rate_diff =
+      home_wc_win_rate -
+      away_wc_win_rate
+  )
+```
+
+
+```{r}
+# ============================================================
+# Predictor 2: Historical World Cup Goals For Per Game Difference
+# ============================================================
+
+wc_gf_pg_by_tournament <- map_dfr(
+  sort(unique(teams_by_tournament$year)),
+  function(target_year) {
+
+    current_teams <- teams_by_tournament |>
+      filter(year == target_year)
+
+    prior_history <- team_match_history |>
+      filter(year < target_year)
+
+    current_teams |>
+      left_join(
+        prior_history |>
+          group_by(team_code) |>
+          summarise(
+            prior_wc_matches = n(),
+            prior_wc_goals_for = sum(goals_for),
+            .groups = "drop"
+          ),
+        by = "team_code"
+      ) |>
+      mutate(
+        prior_wc_matches =
+          replace_na(
+            prior_wc_matches,
+            0L
+          ),
+
+        prior_wc_goals_for =
+          replace_na(
+            prior_wc_goals_for,
+            0
+          ),
+
+        wc_gf_pg = if_else(
+          prior_wc_matches > 0,
+          prior_wc_goals_for / prior_wc_matches,
+          0
+        )
+      ) |>
+      select(
+        year,
+        team_code,
+        wc_gf_pg
+      )
+  }
+)
+
+
+# Home-team goals per game
+home_wc_gf_pg <- wc_gf_pg_by_tournament |>
+  rename(
+    home_team_code = team_code,
+    home_wc_gf_pg = wc_gf_pg
+  )
+
+
+# Away-team goals per game
+away_wc_gf_pg <- wc_gf_pg_by_tournament |>
+  rename(
+    away_team_code = team_code,
+    away_wc_gf_pg = wc_gf_pg
+  )
+
+
+# Add Predictor 2
+world_cup_data <- world_cup_data |>
+  left_join(
+    home_wc_gf_pg,
+    by = c(
+      "year",
+      "home_team_code"
+    )
+  ) |>
+  left_join(
+    away_wc_gf_pg,
+    by = c(
+      "year",
+      "away_team_code"
+    )
+  ) |>
+  mutate(
+    wc_gf_pg_diff =
+      home_wc_gf_pg -
+      away_wc_gf_pg
+  )
+```
+
+
+
+```{r}
+# ============================================================
+# Predictor 3: Historical World Cup Goals Against Per Game Difference
+# ============================================================
+
+wc_ga_pg_by_tournament <- map_dfr(
+  sort(unique(teams_by_tournament$year)),
+  function(target_year) {
+
+    current_teams <- teams_by_tournament |>
+      filter(year == target_year)
+
+    prior_history <- team_match_history |>
+      filter(year < target_year)
+
+    current_teams |>
+      left_join(
+        prior_history |>
+          group_by(team_code) |>
+          summarise(
+            prior_wc_matches = n(),
+            prior_wc_goals_against = sum(goals_against),
+            .groups = "drop"
+          ),
+        by = "team_code"
+      ) |>
+      mutate(
+        prior_wc_matches =
+          replace_na(
+            prior_wc_matches,
+            0L
+          ),
+
+        prior_wc_goals_against =
+          replace_na(
+            prior_wc_goals_against,
+            0
+          ),
+
+        wc_ga_pg = if_else(
+          prior_wc_matches > 0,
+          prior_wc_goals_against / prior_wc_matches,
+          0
+        )
+      ) |>
+      select(
+        year,
+        team_code,
+        wc_ga_pg
+      )
+  }
+)
+
+
+# Home-team goals against per game
+home_wc_ga_pg <- wc_ga_pg_by_tournament |>
+  rename(
+    home_team_code = team_code,
+    home_wc_ga_pg = wc_ga_pg
+  )
+
+
+# Away-team goals against per game
+away_wc_ga_pg <- wc_ga_pg_by_tournament |>
+  rename(
+    away_team_code = team_code,
+    away_wc_ga_pg = wc_ga_pg
+  )
+
+
+# Add Predictor 3
+world_cup_data <- world_cup_data |>
+  left_join(
+    home_wc_ga_pg,
+    by = c(
+      "year",
+      "home_team_code"
+    )
+  ) |>
+  left_join(
+    away_wc_ga_pg,
+    by = c(
+      "year",
+      "away_team_code"
+    )
+  ) |>
+  mutate(
+    wc_ga_pg_diff =
+      home_wc_ga_pg -
+      away_wc_ga_pg
+  )
+```
+
+
+
+```{r}
+# ============================================================
+# Predictor 4: Previous World Cup Appearances Difference
+# ============================================================
+
+wc_appearances_by_tournament <- map_dfr(
+  sort(unique(teams_by_tournament$year)),
+  function(target_year) {
+
+    current_teams <- teams_by_tournament |>
+      filter(year == target_year)
+
+    prior_appearances <- teams_by_tournament |>
+      filter(year < target_year) |>
+      count(
+        team_code,
+        name = "wc_appearances"
+      )
+
+    current_teams |>
+      left_join(
+        prior_appearances,
+        by = "team_code"
+      ) |>
+      mutate(
+        wc_appearances =
+          replace_na(
+            wc_appearances,
+            0L
+          )
+      ) |>
+      select(
+        year,
+        team_code,
+        wc_appearances
+      )
+  }
+)
+
+
+# Home-team appearances
+home_wc_appearances <- wc_appearances_by_tournament |>
+  rename(
+    home_team_code = team_code,
+    home_wc_appearances = wc_appearances
+  )
+
+
+# Away-team appearances
+away_wc_appearances <- wc_appearances_by_tournament |>
+  rename(
+    away_team_code = team_code,
+    away_wc_appearances = wc_appearances
+  )
+
+
+# Add Predictor 4
+world_cup_data <- world_cup_data |>
+  left_join(
+    home_wc_appearances,
+    by = c(
+      "year",
+      "home_team_code"
+    )
+  ) |>
+  left_join(
+    away_wc_appearances,
+    by = c(
+      "year",
+      "away_team_code"
+    )
+  ) |>
+  mutate(
+    wc_appearances_diff =
+      home_wc_appearances -
+      away_wc_appearances
+  )
+```
+
+
+```{r}
+# ============================================================
+# Predictor 5: Previous World Cup Finish Difference
+# ============================================================
+
+# Add winner information to each tournament team
+team_tournament_results <- qualified_teams |>
+  inner_join(
+    mens_tournaments |>
+      left_join(
+        tournaments |>
+          select(
+            tournament_id,
+            winner
+          ),
+        by = "tournament_id"
+      ),
+    by = "tournament_id"
+  )
+
+
+# Score each team's finish in every World Cup
+finish_history <- team_tournament_results |>
+  mutate(
+    performance_clean =
+      str_to_lower(performance),
+
+    finish_score = case_when(
+
+      team_name == winner ~ 6,
+
+      performance_clean == "final" ~ 5,
+
+      str_detect(
+        performance_clean,
+        "semi|third"
+      ) ~ 4,
+
+      str_detect(
+        performance_clean,
+        "quarter"
+      ) ~ 3,
+
+      str_detect(
+        performance_clean,
+        "round of sixteen|round of 16|second round|second group"
+      ) ~ 2,
+
+      TRUE ~ 1
+    )
+  ) |>
+  select(
+    team_code,
+    year,
+    finish_score
+  )
+
+
+# Previous World Cup finish for each team
+previous_finish_by_tournament <- teams_by_tournament |>
+  mutate(
+    previous_year = year - 4
+  ) |>
+  left_join(
+    finish_history,
+    by = c(
+      "team_code",
+      "previous_year" = "year"
+    )
+  ) |>
+  mutate(
+    previous_finish =
+      replace_na(
+        finish_score,
+        0
+      )
+  ) |>
+  select(
+    year,
+    team_code,
+    previous_finish
+  )
+
+
+# Home-team previous finish
+home_previous_finish <- previous_finish_by_tournament |>
+  rename(
+    home_team_code = team_code,
+    home_previous_finish = previous_finish
+  )
+
+
+# Away-team previous finish
+away_previous_finish <- previous_finish_by_tournament |>
+  rename(
+    away_team_code = team_code,
+    away_previous_finish = previous_finish
+  )
+
+
+# Add Predictor 5
+world_cup_data <- world_cup_data |>
+  left_join(
+    home_previous_finish,
+    by = c(
+      "year",
+      "home_team_code"
+    )
+  ) |>
+  left_join(
+    away_previous_finish,
+    by = c(
+      "year",
+      "away_team_code"
+    )
+  ) |>
+  mutate(
+    previous_finish_diff =
+      home_previous_finish -
+      away_previous_finish
+  )  
+```
+
+
+```{r}
+# ============================================================
+# Predictor 6: Historical World Cup Head-to-Head Win Percentage
+# ============================================================
+
+# One row per team/opponent matchup
+h2h_history <- bind_rows(
+
+  matches |>
+    transmute(
+      year,
+      team_code = home_team_code,
+      opponent_code = away_team_code,
+      win = as.integer(
+        home_team_score > away_team_score
+      )
+    ),
+
+  matches |>
+    transmute(
+      year,
+      team_code = away_team_code,
+      opponent_code = home_team_code,
+      win = as.integer(
+        away_team_score > home_team_score
+      )
+    )
+)
+
+
+# Historical H2H record frozen before each World Cup
+h2h_by_tournament <- map_dfr(
+  sort(unique(matches$year)),
+  function(target_year) {
+
+    current_matches <- matches |>
+      filter(year == target_year) |>
+      distinct(
+        year,
+        home_team_code,
+        away_team_code
+      )
+
+    prior_h2h <- h2h_history |>
+      filter(year < target_year) |>
+      group_by(
+        team_code,
+        opponent_code
+      ) |>
+      summarise(
+        h2h_matches = n(),
+        h2h_wins = sum(win),
+        .groups = "drop"
+      )
+
+    current_matches |>
+      left_join(
+        prior_h2h,
+        by = c(
+          "home_team_code" = "team_code",
+          "away_team_code" = "opponent_code"
+        )
+      ) |>
+      mutate(
+        h2h_matches =
+          replace_na(
+            h2h_matches,
+            0L
+          ),
+
+        h2h_wins =
+          replace_na(
+            h2h_wins,
+            0
+          ),
+
+        h2h_win_pct = if_else(
+          h2h_matches > 0,
+          h2h_wins / h2h_matches,
+          0.5
+        )
+      ) |>
+      select(
+        year,
+        home_team_code,
+        away_team_code,
+        h2h_win_pct
+      )
+  }
+)
+
+
+# Add Predictor 6
+world_cup_data <- world_cup_data |>
+  left_join(
+    h2h_by_tournament,
+    by = c(
+      "year",
+      "home_team_code",
+      "away_team_code"
+    )
+  )
+```
+
+
+```{r}
+# ============================================================
+# Predictor 7: Historical World Cup Head-to-Head Matches
+# ============================================================
+
+h2h_matches_by_tournament <- map_dfr(
+  sort(unique(matches$year)),
+  function(target_year) {
+
+    current_matches <- matches |>
+      filter(year == target_year) |>
+      distinct(
+        year,
+        home_team_code,
+        away_team_code
+      )
+
+    prior_h2h <- h2h_history |>
+      filter(year < target_year) |>
+      group_by(
+        team_code,
+        opponent_code
+      ) |>
+      summarise(
+        h2h_matches = n(),
+        .groups = "drop"
+      )
+
+    current_matches |>
+      left_join(
+        prior_h2h,
+        by = c(
+          "home_team_code" = "team_code",
+          "away_team_code" = "opponent_code"
+        )
+      ) |>
+      mutate(
+        h2h_matches =
+          replace_na(
+            h2h_matches,
+            0L
+          )
+      ) |>
+      select(
+        year,
+        home_team_code,
+        away_team_code,
+        h2h_matches
+      )
+  }
+)
+
+
+# Add Predictor 7
+world_cup_data <- world_cup_data |>
+  left_join(
+    h2h_matches_by_tournament,
+    by = c(
+      "year",
+      "home_team_code",
+      "away_team_code"
+    )
+  )
+```
+
+
+
+```{r}
+# ============================================================
+# Predictor 8: Host Advantage
+# ============================================================
+
+host_teams <- host_countries |>
+  semi_join(
+    mens_tournaments,
+    by = "tournament_id"
+  ) |>
+  select(
+    tournament_id,
+    team_code
+  ) |>
+  distinct()
+
+
+# Home-team host indicator
+home_host <- host_teams |>
+  transmute(
+    tournament_id,
+    home_team_code = team_code,
+    home_is_host = 1
+  )
+
+
+# Away-team host indicator
+away_host <- host_teams |>
+  transmute(
+    tournament_id,
+    away_team_code = team_code,
+    away_is_host = 1
+  )
+
+
+# Add Predictor 8
+world_cup_data <- world_cup_data |>
+  left_join(
+    home_host,
+    by = c(
+      "tournament_id",
+      "home_team_code"
+    )
+  ) |>
+  left_join(
+    away_host,
+    by = c(
+      "tournament_id",
+      "away_team_code"
+    )
+  ) |>
+  mutate(
+    home_is_host = replace_na(home_is_host, 0),
+    away_is_host = replace_na(away_is_host, 0),
+
+    host_advantage =
+      home_is_host -
+      away_is_host
+  )
+```
+
+
+```{r}
+# ============================================================
+# Predictor 9: Home Confederation
+# ============================================================
+
+team_confederations <- teams |>
+  select(
+    team_code,
+    confederation_code
+  ) |>
+  distinct()
+
+
+# Add Predictor 9
+world_cup_data <- world_cup_data |>
+  left_join(
+    team_confederations |>
+      rename(
+        home_team_code = team_code,
+        home_confederation = confederation_code
+      ),
+    by = "home_team_code"
+  )
+```
+
+
+
+```{r}
+# ============================================================
+# Predictor 10: Away Confederation
+# ============================================================
+
+world_cup_data <- world_cup_data |>
+  left_join(
+    team_confederations |>
+      rename(
+        away_team_code = team_code,
+        away_confederation = confederation_code
+      ),
+    by = "away_team_code"
+  )
+```
+
+
+
+```{r}
+# ============================================================
+# Predictor 11: Defending Champion Difference
+# ============================================================
+
+defending_champions <- mens_tournaments |>
+  left_join(
+    tournaments |>
+      select(
+        tournament_id,
+        year,
+        winner
+      ),
+    by = c(
+      "tournament_id",
+      "year"
+    )
+  ) |>
+  transmute(
+    year = year + 4,
+    defending_champion = winner
+  )
+
+
+# Add Predictor 11
+world_cup_data <- world_cup_data |>
+  left_join(
+    defending_champions,
+    by = "year"
+  ) |>
+  mutate(
+    home_defending_champion =
+      as.integer(
+        home_team_name == defending_champion
+      ),
+
+    away_defending_champion =
+      as.integer(
+        away_team_name == defending_champion
+      ),
+
+    defending_champion_diff =
+      home_defending_champion -
+      away_defending_champion
+  )
+```
+
+
+```{r}
+
+# ============================================================
+# Predictor 12: Average Squad Age Difference
+# ============================================================
+
+squad_age <- squads |>
+  inner_join(
+    mens_tournaments |>
+      select(
+        tournament_id,
+        start_date
+      ),
+    by = "tournament_id"
+  ) |>
+  left_join(
+    players |>
+      select(
+        player_id,
+        birth_date
+      ),
+    by = "player_id"
+  ) |>
+  mutate(
+    start_date = as.Date(start_date),
+    birth_date = as.Date(birth_date),
+
+    age = as.numeric(
+      start_date - birth_date
+    ) / 365.25
+  ) |>
+  group_by(
+    tournament_id,
+    team_code
+  ) |>
+  summarise(
+    avg_squad_age = mean(
+      age,
+      na.rm = TRUE
+    ),
+    .groups = "drop"
+  )
+
+
+# Home-team squad age
+home_squad_age <- squad_age |>
+  rename(
+    home_team_code = team_code,
+    home_avg_squad_age = avg_squad_age
+  )
+
+
+# Away-team squad age
+away_squad_age <- squad_age |>
+  rename(
+    away_team_code = team_code,
+    away_avg_squad_age = avg_squad_age
+  )
+
+
+# Add Predictor 12
+world_cup_data <- world_cup_data |>
+  left_join(
+    home_squad_age,
+    by = c(
+      "tournament_id",
+      "home_team_code"
+    )
+  ) |>
+  left_join(
+    away_squad_age,
+    by = c(
+      "tournament_id",
+      "away_team_code"
+    )
+  ) |>
+  mutate(
+    avg_squad_age_diff =
+      home_avg_squad_age -
+      away_avg_squad_age
+  )
+
+```
+
+
+```{r}
+# ============================================================
+# Predictor 13: Squad World Cup Experience Difference
+# ============================================================
+
+# Count WC matches played by each player
+# in each tournament
+player_wc_apps <- player_appearances |>
+  inner_join(
+    mens_tournaments |>
+      select(
+        tournament_id,
+        year
+      ),
+    by = "tournament_id"
+  ) |>
+  count(
+    player_id,
+    tournament_id,
+    year,
+    name = "wc_match_apps"
+  )
+
+
+# Previous WC experience for every squad player
+player_tournament_history <- squads |>
+  inner_join(
+    mens_tournaments |>
+      select(
+        tournament_id,
+        year
+      ),
+    by = "tournament_id"
+  ) |>
+  distinct(
+    player_id,
+    tournament_id,
+    year,
+    team_code
+  ) |>
+  left_join(
+    player_wc_apps,
+    by = c(
+      "player_id",
+      "tournament_id",
+      "year"
+    )
+  ) |>
+  mutate(
+    wc_match_apps =
+      replace_na(
+        wc_match_apps,
+        0
+      )
+  ) |>
+  group_by(player_id) |>
+  arrange(
+    year,
+    .by_group = TRUE
+  ) |>
+  mutate(
+    prior_player_wc_apps =
+      lag(
+        cumsum(wc_match_apps),
+        default = 0
+      )
+  ) |>
+  ungroup()
+
+
+# Average previous WC experience for each squad
+squad_experience <- player_tournament_history |>
+  group_by(
+    tournament_id,
+    team_code
+  ) |>
+  summarise(
+    squad_wc_experience =
+      mean(prior_player_wc_apps),
+    .groups = "drop"
+  )
+
+
+# Home-team squad experience
+home_squad_experience <- squad_experience |>
+  rename(
+    home_team_code = team_code,
+    home_squad_wc_experience =
+      squad_wc_experience
+  )
+
+
+# Away-team squad experience
+away_squad_experience <- squad_experience |>
+  rename(
+    away_team_code = team_code,
+    away_squad_wc_experience =
+      squad_wc_experience
+  )
+
+
+# Add Predictor 13
+world_cup_data <- world_cup_data |>
+  left_join(
+    home_squad_experience,
+    by = c(
+      "tournament_id",
+      "home_team_code"
+    )
+  ) |>
+  left_join(
+    away_squad_experience,
+    by = c(
+      "tournament_id",
+      "away_team_code"
+    )
+  ) |>
+  mutate(
+    squad_wc_experience_diff =
+      home_squad_wc_experience -
+      away_squad_wc_experience
+  )
+```
+
+
+```{r}
+# ============================================================
+# Predictor 14: Pre-Tournament Elo Difference
+# ============================================================
+
+# Clean team names for Elo matching
+elo_team_key <- function(x) {
+
+  x <- x |>
+    str_squish() |>
+    stringi::stri_trans_general("Latin-ASCII") |>
+    str_to_lower() |>
+    str_replace_all("[^a-z0-9 ]", " ") |>
+    str_squish()
+
+  case_when(
+    x %in% c(
+      "usa",
+      "united states of america"
+    ) ~ "united states",
+
+    x %in% c(
+      "korea republic",
+      "republic of korea"
+    ) ~ "south korea",
+
+    x == "ir iran" ~ "iran",
+
+    x %in% c(
+      "cote d ivoire",
+      "ivory coast"
+    ) ~ "ivory coast",
+
+    x == "turkiye" ~ "turkey",
+
+    x == "czechia" ~ "czech republic",
+
+    x == "china pr" ~ "china",
+
+    x == "cabo verde" ~ "cape verde",
+
+    x %in% c(
+      "congo dr",
+      "dr congo"
+    ) ~ "dr congo",
+
+    x == "republic of ireland" ~ "ireland",
+    
+    x == "west germany" ~ "germany",
+
+    TRUE ~ x
+  )
+}
+
+
+# Function to get Elo ratings for one date
+get_frozen_elo <- function(date) {
+
+  date <- as.Date(date)
+
+  url <- paste0(
+    "https://www.international-football.net/elo-ratings-table?",
+    "year=", lubridate::year(date),
+    "&month=", sprintf(
+      "%02d",
+      lubridate::month(date)
+    ),
+    "&day=", sprintf(
+      "%02d",
+      lubridate::day(date)
+    )
+  )
+
+  rows <- read_html(url) |>
+    html_elements("table tr")
+
+  map_dfr(
+    rows,
+    function(row) {
+
+      cells <- row |>
+        html_elements("td") |>
+        html_text2()
+
+      if (length(cells) < 3) {
+        return(NULL)
+      }
+
+      rating <- suppressWarnings(
+        as.numeric(
+          str_extract(
+            cells[length(cells)],
+            "\\d{3,4}"
+          )
+        )
+      )
+
+      team <- cells[length(cells) - 1]
+
+      if (
+        is.na(rating) ||
+        team == "" ||
+        !str_detect(team, "[A-Za-z]")
+      ) {
+        return(NULL)
+      }
+
+      tibble(
+        team_key = elo_team_key(team),
+        elo = rating
+      )
+    }
+  ) |>
+    distinct(
+      team_key,
+      .keep_all = TRUE
+    )
+}
+
+
+# Elo snapshot from the day before each World Cup
+elo_snapshots <- map_dfr(
+  seq_len(nrow(mens_tournaments)),
+  function(i) {
+
+    target_year <-
+      mens_tournaments$year[i]
+
+    snapshot_date <-
+      as.Date(
+        mens_tournaments$start_date[i]
+      ) - 1
+
+    get_frozen_elo(snapshot_date) |>
+      mutate(
+        year = target_year
+      )
+  }
+)
+
+
+# Home-team Elo
+home_elo <- world_cup_data |>
+  distinct(
+    year,
+    home_team_name
+  ) |>
+  mutate(
+    team_key =
+      elo_team_key(
+        home_team_name
+      )
+  ) |>
+  left_join(
+    elo_snapshots,
+    by = c(
+      "year",
+      "team_key"
+    )
+  ) |>
+  transmute(
+    year,
+    home_team_name,
+    home_elo = elo
+  )
+
+
+# Away-team Elo
+away_elo <- world_cup_data |>
+  distinct(
+    year,
+    away_team_name
+  ) |>
+  mutate(
+    team_key =
+      elo_team_key(
+        away_team_name
+      )
+  ) |>
+  left_join(
+    elo_snapshots,
+    by = c(
+      "year",
+      "team_key"
+    )
+  ) |>
+  transmute(
+    year,
+    away_team_name,
+    away_elo = elo
+  )
+
+
+# Add Predictor 14
+world_cup_data <- world_cup_data |>
+  left_join(
+    home_elo,
+    by = c(
+      "year",
+      "home_team_name"
+    )
+  ) |>
+  left_join(
+    away_elo,
+    by = c(
+      "year",
+      "away_team_name"
+    )
+  ) |>
+  mutate(
+    elo_diff =
+      home_elo -
+      away_elo
+  )
+
+```
+
+
+```{r}
+# ============================================================
+# Predictor 15: Average International Caps Difference
+# ============================================================
+
+# Clean team names for matching
+clean_caps_name <- function(x) {
+
+  x <- str_squish(x)
+
+  case_when(
+    x == "China PR" ~ "China",
+
+    x %in% c(
+      "Korea Republic",
+      "Republic of Korea"
+    ) ~ "South Korea",
+
+    x == "IR Iran" ~ "Iran",
+
+    x == "United States of America" ~ "United States",
+
+    x %in% c(
+      "Côte d'Ivoire",
+      "Ivory Coast"
+    ) ~ "Ivory Coast",
+
+    x == "Türkiye" ~ "Turkey",
+
+    x == "Czechia" ~ "Czech Republic",
+
+    x %in% c(
+      "FR Yugoslavia",
+      "Yugoslavia (FR Yugoslavia)"
+    ) ~ "Yugoslavia",
+
+    TRUE ~ x
+  )
+}
+
+
+# Function to scrape squad caps for one World Cup
+scrape_wc_caps <- function(year) {
+
+  url <- paste0(
+    "https://en.wikipedia.org/wiki/",
+    year,
+    "_FIFA_World_Cup_squads"
+  )
+
+  page <- read_html(url)
+
+  headings <- page |>
+    html_elements("h3")
+
+  map_dfr(
+    headings,
+    function(h) {
+
+      team <- h |>
+        html_text2() |>
+        str_remove("\\[edit\\]$") |>
+        str_squish()
+
+      table_node <- xml2::xml_find_first(
+        h,
+        "following::table[1]"
+      )
+
+      if (inherits(table_node, "xml_missing")) {
+        return(NULL)
+      }
+
+      tbl <- tryCatch(
+        html_table(
+          table_node,
+          fill = TRUE
+        ),
+        error = function(e) NULL
+      )
+
+      if (is.null(tbl)) {
+        return(NULL)
+      }
+
+      column_names <- names(tbl)
+
+      caps_col <- column_names[
+        str_detect(
+          str_to_lower(column_names),
+          "caps"
+        )
+      ]
+
+      player_col <- column_names[
+        str_detect(
+          str_to_lower(column_names),
+          "player"
+        )
+      ]
+
+      if (
+        length(caps_col) == 0 |
+        length(player_col) == 0
+      ) {
+        return(NULL)
+      }
+
+      tibble(
+        year = year,
+        team_name = team,
+        player = tbl[[player_col[1]]],
+        caps = parse_number(
+          as.character(
+            tbl[[caps_col[1]]]
+          )
+        )
+      ) |>
+        filter(
+          !is.na(player),
+          player != "",
+          !is.na(caps)
+        )
+    }
+  )
+}
+
+
+# Get squad caps for the World Cups in our data
+caps_years <- sort(
+  unique(world_cup_data$year)
+)
+
+squad_caps_raw <- map_dfr(
+  caps_years,
+  scrape_wc_caps
+)
+
+
+# Average caps for each team
+squad_caps_by_team <- squad_caps_raw |>
+  mutate(
+    team_clean =
+      clean_caps_name(team_name)
+  ) |>
+  group_by(
+    year,
+    team_clean
+  ) |>
+  summarise(
+    avg_caps =
+      mean(
+        caps,
+        na.rm = TRUE
+      ),
+    .groups = "drop"
+  )
+
+
+# Home-team average caps
+home_caps <- squad_caps_by_team |>
+  rename(
+    home_team_name = team_clean,
+    home_avg_caps = avg_caps
+  )
+
+
+# Away-team average caps
+away_caps <- squad_caps_by_team |>
+  rename(
+    away_team_name = team_clean,
+    away_avg_caps = avg_caps
+  )
+
+
+# Clean World Cup team names for matching
+world_cup_data <- world_cup_data |>
+  mutate(
+    home_team_name =
+      clean_caps_name(home_team_name),
+
+    away_team_name =
+      clean_caps_name(away_team_name)
+  )
+
+
+# Add Predictor 15
+world_cup_data <- world_cup_data |>
+  left_join(
+    home_caps,
+    by = c(
+      "year",
+      "home_team_name"
+    )
+  ) |>
+  left_join(
+    away_caps,
+    by = c(
+      "year",
+      "away_team_name"
+    )
+  ) |>
+  mutate(
+    avg_caps_diff =
+      home_avg_caps -
+      away_avg_caps
+  )
+```
+
+
+```{r}
+# ============================================================
+# Predictor 16: Qualification Performance Difference
+# ============================================================
+
+
+# ------------------------------------------------------------
+# Download international match results
+# ------------------------------------------------------------
+
+international_results <- read_csv(
+  paste0(
+    "https://raw.githubusercontent.com/",
+    "martj42/international_results/",
+    "master/results.csv"
+  ),
+  show_col_types = FALSE
+) |>
+  mutate(
+    date = as.Date(date)
+  )
+
+
+# ------------------------------------------------------------
+# Historical team-name mappings
+# ------------------------------------------------------------
+
+former_names <- read_csv(
+  paste0(
+    "https://raw.githubusercontent.com/",
+    "martj42/international_results/",
+    "master/former_names.csv"
+  ),
+  show_col_types = FALSE
+)
+
+
+former_lookup <- setNames(
+  former_names$current,
+  former_names$former
+)
+
+
+# ------------------------------------------------------------
+# Clean qualification team names
+# ------------------------------------------------------------
+
+clean_qual_name <- function(x) {
+
+  x <- str_squish(x)
+
+  x <- case_when(
+
+    x == "IR Iran" ~ "Iran",
+
+    x %in% c(
+      "Korea Republic",
+      "Republic of Korea"
+    ) ~ "South Korea",
+
+    x == "Côte d'Ivoire" ~ "Ivory Coast",
+
+    x == "Türkiye" ~ "Turkey",
+
+    TRUE ~ x
+  )
+
+  idx <- match(
+    x,
+    names(former_lookup)
+  )
+
+  replace_rows <- !is.na(idx)
+
+  x[replace_rows] <-
+    unname(
+      former_lookup[
+        idx[replace_rows]
+      ]
+    )
+
+  x
+}
+
+
+# ------------------------------------------------------------
+# World Cup start dates
+# ------------------------------------------------------------
+
+all_wc_starts <- mens_tournaments |>
+  transmute(
+    wc_year = year,
+    wc_start = as.Date(start_date)
+  ) |>
+  arrange(wc_start)
+
+
+# ------------------------------------------------------------
+# Assign qualification matches to the next World Cup
+# ------------------------------------------------------------
+
+find_next_world_cup <- function(match_dates) {
+
+  map_dbl(
+    match_dates,
+    function(d) {
+
+      next_index <- which(
+        all_wc_starts$wc_start > d
+      )[1]
+
+      if (is.na(next_index)) {
+        return(NA_real_)
+      }
+
+      all_wc_starts$wc_year[
+        next_index
+      ]
+    }
+  )
+}
+
+
+# ------------------------------------------------------------
+# Keep World Cup qualification matches
+#
+# CONCACAF Championship is included because the
+# 1989 tournament served as qualification for 1990
+# ------------------------------------------------------------
+
+qual_matches <- international_results |>
+  filter(
+    tournament %in% c(
+      "FIFA World Cup qualification",
+      "CONCACAF Championship"
+    )
+  ) |>
+  mutate(
+    wc_year =
+      find_next_world_cup(date)
+  ) |>
+  filter(
+    wc_year %in%
+      unique(world_cup_data$year)
+  )
+
+
+# ------------------------------------------------------------
+# One row per team per qualifying match
+# ------------------------------------------------------------
+
+qual_team_matches <- bind_rows(
+
+  qual_matches |>
+    transmute(
+      wc_year,
+      team_name = home_team,
+      goals_for = home_score,
+      goals_against = away_score
+    ),
+
+  qual_matches |>
+    transmute(
+      wc_year,
+      team_name = away_team,
+      goals_for = away_score,
+      goals_against = home_score
+    )
+
+) |>
+  mutate(
+    team_clean =
+      clean_qual_name(team_name),
+
+    win = as.integer(
+      goals_for > goals_against
+    ),
+
+    draw = as.integer(
+      goals_for == goals_against
+    )
+  )
+
+
+# ------------------------------------------------------------
+# Qualification performance by team
+#
+# 1 = perfect qualifying record
+# 0 = lost every qualifying match
+# ------------------------------------------------------------
+
+qualification_by_team <- qual_team_matches |>
+  group_by(
+    wc_year,
+    team_clean
+  ) |>
+  summarise(
+    qual_matches = n(),
+
+    qual_wins = sum(win),
+
+    qual_draws = sum(draw),
+
+    qualification_perf =
+      (
+        3 * qual_wins +
+        qual_draws
+      ) /
+      (
+        3 * qual_matches
+      ),
+
+    .groups = "drop"
+  )
+
+
+# ------------------------------------------------------------
+# Automatic qualifiers
+#
+# Neutral qualification performance = 0.5
+# ------------------------------------------------------------
+
+automatic_qualifiers <- tribble(
+  ~wc_year, ~team_name,
+
+  1990, "Italy",
+  1990, "Argentina",
+
+  1994, "United States",
+  1994, "Germany",
+
+  1998, "France",
+  1998, "Brazil",
+
+  2002, "South Korea",
+  2002, "Japan",
+  2002, "France",
+
+  2006, "Germany",
+
+  2010, "South Africa",
+
+  2014, "Brazil",
+
+  2018, "Russia",
+
+  2022, "Qatar"
+) |>
+  mutate(
+    team_clean =
+      clean_qual_name(team_name),
+
+    qualification_perf = 0.5
+  ) |>
+  select(
+    wc_year,
+    team_clean,
+    qualification_perf
+  )
+
+
+# ------------------------------------------------------------
+# Add automatic qualifiers
+# ------------------------------------------------------------
+
+qualification_by_team <- qualification_by_team |>
+  select(
+    wc_year,
+    team_clean,
+    qualification_perf
+  ) |>
+  anti_join(
+    automatic_qualifiers,
+    by = c(
+      "wc_year",
+      "team_clean"
+    )
+  ) |>
+  bind_rows(
+    automatic_qualifiers
+  )
+
+
+# ------------------------------------------------------------
+# Remove old Predictor 16 columns if rerunning
+# ------------------------------------------------------------
+
+world_cup_data <- world_cup_data |>
+  select(
+    -any_of(
+      c(
+        "home_qualification_perf",
+        "away_qualification_perf",
+        "qualification_perf_diff",
+        "qual_home_key",
+        "qual_away_key",
+        "home_qual_key",
+        "away_qual_key"
+      )
+    )
+  )
+
+
+# ------------------------------------------------------------
+# Create matching keys
+# ------------------------------------------------------------
+
+world_cup_data <- world_cup_data |>
+  mutate(
+
+    qual_home_key = case_when(
+
+      year == 1990 &
+        home_team_name == "West Germany" ~
+        "Germany",
+
+      year == 1990 &
+        home_team_name == "Soviet Union" ~
+        "Russia",
+
+      year == 1998 &
+        home_team_name == "Yugoslavia" ~
+        "Serbia",
+
+      year == 2006 &
+        home_team_name ==
+        "Serbia and Montenegro" ~
+        "Serbia",
+
+      TRUE ~
+        clean_qual_name(
+          home_team_name
+        )
+    ),
+
+    qual_away_key = case_when(
+
+      year == 1990 &
+        away_team_name == "West Germany" ~
+        "Germany",
+
+      year == 1990 &
+        away_team_name == "Soviet Union" ~
+        "Russia",
+
+      year == 1998 &
+        away_team_name == "Yugoslavia" ~
+        "Serbia",
+
+      year == 2006 &
+        away_team_name ==
+        "Serbia and Montenegro" ~
+        "Serbia",
+
+      TRUE ~
+        clean_qual_name(
+          away_team_name
+        )
+    )
+  )
+
+
+# ------------------------------------------------------------
+# Home qualification performance
+# ------------------------------------------------------------
+
+home_qualification <- qualification_by_team |>
+  select(
+    year = wc_year,
+    qual_home_key = team_clean,
+    home_qualification_perf =
+      qualification_perf
+  )
+
+
+# ------------------------------------------------------------
+# Away qualification performance
+# ------------------------------------------------------------
+
+away_qualification <- qualification_by_team |>
+  select(
+    year = wc_year,
+    qual_away_key = team_clean,
+    away_qualification_perf =
+      qualification_perf
+  )
+
+
+# ------------------------------------------------------------
+# Add Predictor 16
+# ------------------------------------------------------------
+
+world_cup_data <- world_cup_data |>
+  left_join(
+    home_qualification,
+    by = c(
+      "year",
+      "qual_home_key"
+    )
+  ) |>
+  left_join(
+    away_qualification,
+    by = c(
+      "year",
+      "qual_away_key"
+    )
+  ) |>
+  mutate(
+    qualification_perf_diff =
+      home_qualification_perf -
+      away_qualification_perf
+  )
+
+```
+
+
+```{r}
+# ============================================================
+# Predictor 17: Qualification Goal Difference
+# ============================================================
+
+
+# ------------------------------------------------------------
+# Qualification goal difference by team
+# ------------------------------------------------------------
+
+qualification_gd_by_team <- qual_team_matches |>
+  group_by(
+    wc_year,
+    team_clean
+  ) |>
+  summarise(
+    qual_matches = n(),
+
+    qual_goals_for =
+      sum(goals_for),
+
+    qual_goals_against =
+      sum(goals_against),
+
+    qualification_gd =
+      (
+        qual_goals_for -
+        qual_goals_against
+      ) /
+      qual_matches,
+
+    .groups = "drop"
+  )
+
+
+# ------------------------------------------------------------
+# Automatic qualifiers
+#
+# Neutral qualification GD = 0
+# ------------------------------------------------------------
+
+automatic_qualifiers_gd <- tribble(
+  ~wc_year, ~team_name,
+
+  1990, "Italy",
+  1990, "Argentina",
+
+  1994, "United States",
+  1994, "Germany",
+
+  1998, "France",
+  1998, "Brazil",
+
+  2002, "South Korea",
+  2002, "Japan",
+  2002, "France",
+
+  2006, "Germany",
+
+  2010, "South Africa",
+
+  2014, "Brazil",
+
+  2018, "Russia",
+
+  2022, "Qatar"
+) |>
+  mutate(
+    team_clean =
+      clean_qual_name(team_name),
+
+    qualification_gd = 0
+  ) |>
+  select(
+    wc_year,
+    team_clean,
+    qualification_gd
+  )
+
+
+# ------------------------------------------------------------
+# Add automatic qualifiers
+# ------------------------------------------------------------
+
+qualification_gd_by_team <- qualification_gd_by_team |>
+  select(
+    wc_year,
+    team_clean,
+    qualification_gd
+  ) |>
+  anti_join(
+    automatic_qualifiers_gd,
+    by = c(
+      "wc_year",
+      "team_clean"
+    )
+  ) |>
+  bind_rows(
+    automatic_qualifiers_gd
+  )
+
+
+# ------------------------------------------------------------
+# Remove old Predictor 17 columns if rerunning
+# ------------------------------------------------------------
+
+world_cup_data <- world_cup_data |>
+  select(
+    -any_of(
+      c(
+        "home_qualification_gd",
+        "away_qualification_gd",
+        "qualification_gd_diff"
+      )
+    )
+  )
+
+
+# ------------------------------------------------------------
+# Home qualification GD
+# Uses qualification keys from Predictor 16
+# ------------------------------------------------------------
+
+home_qualification_gd <- qualification_gd_by_team |>
+  select(
+    year = wc_year,
+    qual_home_key = team_clean,
+    home_qualification_gd =
+      qualification_gd
+  )
+
+
+# ------------------------------------------------------------
+# Away qualification GD
+# ------------------------------------------------------------
+
+away_qualification_gd <- qualification_gd_by_team |>
+  select(
+    year = wc_year,
+    qual_away_key = team_clean,
+    away_qualification_gd =
+      qualification_gd
+  )
+
+
+# ------------------------------------------------------------
+# Add Predictor 17
+# ------------------------------------------------------------
+
+world_cup_data <- world_cup_data |>
+  left_join(
+    home_qualification_gd,
+    by = c(
+      "year",
+      "qual_home_key"
+    )
+  ) |>
+  left_join(
+    away_qualification_gd,
+    by = c(
+      "year",
+      "qual_away_key"
+    )
+  ) |>
+  mutate(
+    qualification_gd_diff =
+      home_qualification_gd -
+      away_qualification_gd
+  )
+```
+
+
+```{r}
+# ============================================================
+# BUILD 2026 WORLD CUP DATA + FINAL DATASET
+# ============================================================
+
+
+# ------------------------------------------------------------
+# 1. Helper for matching 2026 team names
+# ------------------------------------------------------------
+
+normalize_2026_team <- function(x) {
+
+  x <- x |>
+    str_squish() |>
+    stringi::stri_trans_general("Latin-ASCII") |>
+    str_to_lower() |>
+    str_replace_all("[^a-z0-9 ]", " ") |>
+    str_squish()
+
+  case_when(
+
+    x %in% c(
+      "usa",
+      "united states of america"
+    ) ~ "united states",
+
+    x %in% c(
+      "korea republic",
+      "republic of korea"
+    ) ~ "south korea",
+
+    x == "ir iran" ~ "iran",
+
+    x == "republic of ireland" ~ "ireland",
+
+    x %in% c(
+      "cote d ivoire",
+      "ivory coast"
+    ) ~ "ivory coast",
+
+    x == "turkiye" ~ "turkey",
+
+    x == "czechia" ~ "czech republic",
+
+    x == "cabo verde" ~ "cape verde",
+
+    x %in% c(
+      "congo dr",
+      "dr congo",
+      "dem rep of congo",
+      "democratic republic of congo",
+      "democratic republic of the congo",
+      "congo kinshasa",
+      "zaire"
+    ) ~ "dr congo",
+
+    TRUE ~ x
+  )
+}
+
+
+# ------------------------------------------------------------
+# 2. Download 2026 World Cup data
+# ------------------------------------------------------------
+
+wc26_base <- paste0(
+  "https://raw.githubusercontent.com/",
+  "stiles/world-cup/",
+  "refs/heads/main/",
+  "data/processed/2026/"
+)
+
+wc26_results <- read_csv(
+  paste0(
+    wc26_base,
+    "results.csv"
+  ),
+  show_col_types = FALSE
+)
+
+wc26_schedule <- read_csv(
+  paste0(
+    wc26_base,
+    "schedule.csv"
+  ),
+  show_col_types = FALSE
+)
+
+wc26_teams <- read_csv(
+  paste0(
+    wc26_base,
+    "teams.csv"
+  ),
+  show_col_types = FALSE
+)
+
+wc26_players <- read_csv(
+  paste0(
+    wc26_base,
+    "players.csv"
+  ),
+  show_col_types = FALSE
+)
+
+
+# ------------------------------------------------------------
+# 3. Base 2026 match table
+# ------------------------------------------------------------
+
+wc26_matches <- wc26_results |>
+  left_join(
+    wc26_schedule |>
+      select(
+        id_match,
+        local_date
+      ),
+    by = "id_match"
+  ) |>
+  transmute(
+    tournament_id = "WC-2026",
+
+    year = 2026,
+
+    match_id = paste0(
+      "M-2026-",
+      str_pad(
+        match_number,
+        width = 3,
+        pad = "0"
+      )
+    ),
+
+    match_date =
+      as.Date(local_date),
+
+    home_team_code =
+      home_team,
+
+    home_team_name =
+      home_name,
+
+    away_team_code =
+      away_team,
+
+    away_team_name =
+      away_name,
+
+    home_team_score =
+      home_score,
+
+    away_team_score =
+      away_score,
+
+    match_result = case_when(
+      home_score > away_score ~
+        "Home Win",
+
+      home_score < away_score ~
+        "Away Win",
+
+      TRUE ~
+        "Draw"
+    )
+  )
+
+
+# ------------------------------------------------------------
+# 4. Match 2026 teams to historical World Cup teams
+# ------------------------------------------------------------
+
+historical_team_lookup <- teams |>
+  mutate(
+    team_key =
+      normalize_2026_team(
+        team_name
+      )
+  ) |>
+  select(
+    team_key,
+    history_code = team_code
+  ) |>
+  distinct(
+    team_key,
+    .keep_all = TRUE
+  )
+
+
+wc26_team_lookup <- wc26_teams |>
+  mutate(
+    team_key =
+      normalize_2026_team(
+        team_name
+      )
+  ) |>
+  left_join(
+    historical_team_lookup,
+    by = "team_key"
+  ) |>
+  mutate(
+
+    history_code = case_when(
+
+      team_key ==
+        "dr congo" ~ "COD",
+
+      TRUE ~ history_code
+    ),
+
+    history_code = coalesce(
+      history_code,
+      paste0(
+        "NEW_",
+        abbreviation
+      )
+    )
+  )
+
+
+# Add historical codes to match table
+wc26_matches <- wc26_matches |>
+  left_join(
+    wc26_team_lookup |>
+      select(
+        home_team_code = abbreviation,
+        home_history_code =
+          history_code
+      ),
+    by = "home_team_code"
+  ) |>
+  left_join(
+    wc26_team_lookup |>
+      select(
+        away_team_code = abbreviation,
+        away_history_code =
+          history_code
+      ),
+    by = "away_team_code"
+  )
+
+
+# ============================================================
+# PREDICTORS 1-4
+# HISTORICAL WORLD CUP PERFORMANCE
+# Frozen using matches through 2022
+# ============================================================
+
+wc26_history <- team_match_history |>
+  group_by(
+    team_code
+  ) |>
+  summarise(
+    prior_wc_matches = n(),
+
+    prior_wc_wins =
+      sum(win),
+
+    prior_wc_gf =
+      sum(goals_for),
+
+    prior_wc_ga =
+      sum(goals_against),
+
+    prior_wc_appearances =
+      n_distinct(year),
+
+    wc_win_rate =
+      prior_wc_wins /
+      prior_wc_matches,
+
+    wc_gf_pg =
+      prior_wc_gf /
+      prior_wc_matches,
+
+    wc_ga_pg =
+      prior_wc_ga /
+      prior_wc_matches,
+
+    .groups = "drop"
+  )
+
+
+wc26_home_history <- wc26_history |>
+  rename(
+    home_history_code =
+      team_code,
+
+    home_wc_win_rate =
+      wc_win_rate,
+
+    home_wc_gf_pg =
+      wc_gf_pg,
+
+    home_wc_ga_pg =
+      wc_ga_pg,
+
+    home_wc_appearances =
+      prior_wc_appearances
+  )
+
+
+wc26_away_history <- wc26_history |>
+  rename(
+    away_history_code =
+      team_code,
+
+    away_wc_win_rate =
+      wc_win_rate,
+
+    away_wc_gf_pg =
+      wc_gf_pg,
+
+    away_wc_ga_pg =
+      wc_ga_pg,
+
+    away_wc_appearances =
+      prior_wc_appearances
+  )
+
+
+wc26_matches <- wc26_matches |>
+  left_join(
+    wc26_home_history,
+    by = "home_history_code"
+  ) |>
+  left_join(
+    wc26_away_history,
+    by = "away_history_code"
+  ) |>
+  mutate(
+    across(
+      c(
+        home_wc_win_rate,
+        home_wc_gf_pg,
+        home_wc_ga_pg,
+        home_wc_appearances,
+        away_wc_win_rate,
+        away_wc_gf_pg,
+        away_wc_ga_pg,
+        away_wc_appearances
+      ),
+      ~ replace_na(.x, 0)
+    ),
+
+    wc_win_rate_diff =
+      home_wc_win_rate -
+      away_wc_win_rate,
+
+    wc_gf_pg_diff =
+      home_wc_gf_pg -
+      away_wc_gf_pg,
+
+    wc_ga_pg_diff =
+      home_wc_ga_pg -
+      away_wc_ga_pg,
+
+    wc_appearances_diff =
+      home_wc_appearances -
+      away_wc_appearances
+  )
+
+
+# ============================================================
+# PREDICTOR 5
+# PREVIOUS WORLD CUP FINISH
+# ============================================================
+
+wc2022_id <- mens_tournaments |>
+  filter(
+    year == 2022
+  ) |>
+  pull(tournament_id)
+
+
+wc2022_winner <- tournaments |>
+  filter(
+    tournament_id ==
+      wc2022_id
+  ) |>
+  pull(winner)
+
+
+previous_finish_2022 <- qualified_teams |>
+  filter(
+    tournament_id ==
+      wc2022_id
+  ) |>
+  mutate(
+    performance_clean =
+      str_to_lower(
+        performance
+      ),
+
+    previous_finish =
+      case_when(
+
+        team_name ==
+          wc2022_winner ~ 6,
+
+        performance_clean ==
+          "final" ~ 5,
+
+        str_detect(
+          performance_clean,
+          "semi|third"
+        ) ~ 4,
+
+        str_detect(
+          performance_clean,
+          "quarter"
+        ) ~ 3,
+
+        str_detect(
+          performance_clean,
+          "round of 16|round of sixteen"
+        ) ~ 2,
+
+        TRUE ~ 1
+      )
+  ) |>
+  select(
+    team_code,
+    previous_finish
+  )
+
+
+wc26_matches <- wc26_matches |>
+  left_join(
+    previous_finish_2022 |>
+      rename(
+        home_history_code =
+          team_code,
+
+        home_previous_finish =
+          previous_finish
+      ),
+    by = "home_history_code"
+  ) |>
+  left_join(
+    previous_finish_2022 |>
+      rename(
+        away_history_code =
+          team_code,
+
+        away_previous_finish =
+          previous_finish
+      ),
+    by = "away_history_code"
+  ) |>
+  mutate(
+    home_previous_finish =
+      replace_na(
+        home_previous_finish,
+        0
+      ),
+
+    away_previous_finish =
+      replace_na(
+        away_previous_finish,
+        0
+      ),
+
+    previous_finish_diff =
+      home_previous_finish -
+      away_previous_finish
+  )
+
+
+# ============================================================
+# PREDICTORS 6-7
+# HISTORICAL WORLD CUP HEAD-TO-HEAD
+# Frozen before 2026
+# ============================================================
+
+mens_wc_ids <- mens_tournaments |>
+  pull(tournament_id)
+
+
+wc26_h2h_history <- team_appearances |>
+  filter(
+    tournament_id %in%
+      mens_wc_ids
+  ) |>
+  group_by(
+    team_code,
+    opponent_code
+  ) |>
+  summarise(
+    h2h_matches = n(),
+
+    h2h_wins =
+      sum(win),
+
+    h2h_win_pct =
+      h2h_wins /
+      h2h_matches,
+
+    .groups = "drop"
+  )
+
+
+wc26_matches <- wc26_matches |>
+  left_join(
+    wc26_h2h_history,
+    by = c(
+      "home_history_code" =
+        "team_code",
+
+      "away_history_code" =
+        "opponent_code"
+    )
+  ) |>
+  mutate(
+    h2h_matches =
+      replace_na(
+        h2h_matches,
+        0
+      ),
+
+    h2h_win_pct =
+      replace_na(
+        h2h_win_pct,
+        0.5
+      )
+  )
+
+
+# ============================================================
+# PREDICTORS 8-11
+# HOST, CONFEDERATION, DEFENDING CHAMPION
+# ============================================================
+
+wc26_context <- wc26_team_lookup |>
+  transmute(
+    team_code =
+      abbreviation,
+
+    confederation =
+      confederation,
+
+    is_host =
+      as.integer(
+        abbreviation %in%
+          c(
+            "CAN",
+            "MEX",
+            "USA"
+          )
+      ),
+
+    is_defending_champion =
+      as.integer(
+        abbreviation ==
+          "ARG"
+      )
+  )
+
+
+wc26_matches <- wc26_matches |>
+  left_join(
+    wc26_context |>
+      rename(
+        home_team_code =
+          team_code,
+
+        home_confederation =
+          confederation,
+
+        home_is_host =
+          is_host,
+
+        home_defending_champion =
+          is_defending_champion
+      ),
+    by = "home_team_code"
+  ) |>
+  left_join(
+    wc26_context |>
+      rename(
+        away_team_code =
+          team_code,
+
+        away_confederation =
+          confederation,
+
+        away_is_host =
+          is_host,
+
+        away_defending_champion =
+          is_defending_champion
+      ),
+    by = "away_team_code"
+  ) |>
+  mutate(
+    host_advantage =
+      home_is_host -
+      away_is_host,
+
+    defending_champion_diff =
+      home_defending_champion -
+      away_defending_champion
+  )
+
+
+# ============================================================
+# PREDICTOR 12
+# AVERAGE SQUAD AGE
+# ============================================================
+
+wc26_squad_age <- wc26_players |>
+  mutate(
+    birth_date =
+      as.Date(dob),
+
+    age =
+      as.numeric(
+        as.Date(
+          "2026-06-11"
+        ) -
+        birth_date
+      ) /
+      365.25
+  ) |>
+  group_by(
+    team_abbr
+  ) |>
+  summarise(
+    avg_squad_age =
+      mean(
+        age,
+        na.rm = TRUE
+      ),
+
+    .groups = "drop"
+  )
+
+
+wc26_matches <- wc26_matches |>
+  left_join(
+    wc26_squad_age |>
+      rename(
+        home_team_code =
+          team_abbr,
+
+        home_avg_squad_age =
+          avg_squad_age
+      ),
+    by = "home_team_code"
+  ) |>
+  left_join(
+    wc26_squad_age |>
+      rename(
+        away_team_code =
+          team_abbr,
+
+        away_avg_squad_age =
+          avg_squad_age
+      ),
+    by = "away_team_code"
+  ) |>
+  mutate(
+    avg_squad_age_diff =
+      home_avg_squad_age -
+      away_avg_squad_age
+  )
+
+
+# ============================================================
+# PREDICTOR 13
+# SQUAD WORLD CUP EXPERIENCE
+# ============================================================
+
+prior_player_wc_apps <- player_appearances |>
+  filter(
+    tournament_id %in%
+      mens_wc_ids
+  ) |>
+  count(
+    player_id,
+    team_code,
+    name = "prior_wc_apps"
+  ) |>
+  left_join(
+    players |>
+      select(
+        player_id,
+        birth_date
+      ),
+    by = "player_id"
+  ) |>
+  mutate(
+    birth_date =
+      as.Date(
+        birth_date
+      )
+  ) |>
+  group_by(
+    team_code,
+    birth_date
+  ) |>
+  summarise(
+    prior_wc_apps =
+      max(
+        prior_wc_apps
+      ),
+
+    .groups = "drop"
+  )
+
+
+wc26_squad_experience <- wc26_players |>
+  mutate(
+    birth_date =
+      as.Date(dob)
+  ) |>
+  left_join(
+    wc26_team_lookup |>
+      select(
+        team_abbr =
+          abbreviation,
+
+        history_code
+      ),
+    by = "team_abbr"
+  ) |>
+  left_join(
+    prior_player_wc_apps,
+    by = c(
+      "history_code" =
+        "team_code",
+
+      "birth_date"
+    )
+  ) |>
+  mutate(
+    prior_wc_apps =
+      replace_na(
+        prior_wc_apps,
+        0
+      )
+  ) |>
+  group_by(
+    team_abbr
+  ) |>
+  summarise(
+    squad_wc_experience =
+      mean(
+        prior_wc_apps
+      ),
+
+    .groups = "drop"
+  )
+
+
+wc26_matches <- wc26_matches |>
+  left_join(
+    wc26_squad_experience |>
+      rename(
+        home_team_code =
+          team_abbr,
+
+        home_squad_wc_experience =
+          squad_wc_experience
+      ),
+    by = "home_team_code"
+  ) |>
+  left_join(
+    wc26_squad_experience |>
+      rename(
+        away_team_code =
+          team_abbr,
+
+        away_squad_wc_experience =
+          squad_wc_experience
+      ),
+    by = "away_team_code"
+  ) |>
+  mutate(
+    squad_wc_experience_diff =
+      home_squad_wc_experience -
+      away_squad_wc_experience
+  )
+
+
+# ============================================================
+# PREDICTOR 14
+# PRE-TOURNAMENT ELO
+#
+# Freeze Elo on June 10, 2026
+# ============================================================
+
+elo_2026 <- get_frozen_elo(
+  as.Date(
+    "2026-06-10"
+  )
+) |>
+  mutate(
+    team_key =
+      normalize_2026_team(
+        team_key
+      )
+  ) |>
+  distinct(
+    team_key,
+    .keep_all = TRUE
+  )
+
+
+wc26_matches <- wc26_matches |>
+  mutate(
+    home_team_key =
+      normalize_2026_team(
+        home_team_name
+      ),
+
+    away_team_key =
+      normalize_2026_team(
+        away_team_name
+      )
+  ) |>
+  left_join(
+    elo_2026 |>
+      select(
+        home_team_key =
+          team_key,
+
+        home_elo =
+          elo
+      ),
+    by = "home_team_key"
+  ) |>
+  left_join(
+    elo_2026 |>
+      select(
+        away_team_key =
+          team_key,
+
+        away_elo =
+          elo
+      ),
+    by = "away_team_key"
+  ) |>
+  mutate(
+    elo_diff =
+      home_elo -
+      away_elo
+  )
+
+
+# ============================================================
+# PREDICTOR 15
+# AVERAGE INTERNATIONAL CAPS
+# ============================================================
+
+caps_2026 <- scrape_wc_caps(
+  2026
+) |>
+  mutate(
+    team_key =
+      normalize_2026_team(
+        team_name
+      )
+  ) |>
+  group_by(
+    team_key
+  ) |>
+  summarise(
+    avg_caps =
+      mean(
+        caps,
+        na.rm = TRUE
+      ),
+
+    .groups = "drop"
+  )
+
+
+wc26_matches <- wc26_matches |>
+  left_join(
+    caps_2026 |>
+      select(
+        home_team_key =
+          team_key,
+
+        home_avg_caps =
+          avg_caps
+      ),
+    by = "home_team_key"
+  ) |>
+  left_join(
+    caps_2026 |>
+      select(
+        away_team_key =
+          team_key,
+
+        away_avg_caps =
+          avg_caps
+      ),
+    by = "away_team_key"
+  ) |>
+  mutate(
+    avg_caps_diff =
+      home_avg_caps -
+      away_avg_caps
+  )
+
+
+# ============================================================
+# PREDICTORS 16-17
+# 2026 QUALIFICATION PERFORMANCE
+# ============================================================
+
+qual26_matches <- international_results |>
+  filter(
+    date >
+      as.Date(
+        "2022-12-18"
+      ),
+
+    date <
+      as.Date(
+        "2026-06-11"
+      ),
+
+    tournament ==
+      "FIFA World Cup qualification"
+  )
+
+
+qual26_team_matches <- bind_rows(
+
+  qual26_matches |>
+    transmute(
+      team_key =
+        normalize_2026_team(
+          home_team
+        ),
+
+      goals_for =
+        home_score,
+
+      goals_against =
+        away_score
+    ),
+
+  qual26_matches |>
+    transmute(
+      team_key =
+        normalize_2026_team(
+          away_team
+        ),
+
+      goals_for =
+        away_score,
+
+      goals_against =
+        home_score
+    )
+
+) |>
+  mutate(
+    win =
+      as.integer(
+        goals_for >
+        goals_against
+      ),
+
+    draw =
+      as.integer(
+        goals_for ==
+        goals_against
+      )
+  )
+
+
+qualification_2026 <- qual26_team_matches |>
+  group_by(
+    team_key
+  ) |>
+  summarise(
+    qual_matches = n(),
+
+    qual_wins =
+      sum(win),
+
+    qual_draws =
+      sum(draw),
+
+    qual_gf =
+      sum(goals_for),
+
+    qual_ga =
+      sum(goals_against),
+
+    qualification_perf =
+      (
+        3 * qual_wins +
+        qual_draws
+      ) /
+      (
+        3 * qual_matches
+      ),
+
+    qualification_gd =
+      (
+        qual_gf -
+        qual_ga
+      ) /
+      qual_matches,
+
+    .groups = "drop"
+  )
+
+
+# Hosts automatically qualified
+automatic_2026 <- tibble(
+  team_key =
+    normalize_2026_team(
+      c(
+        "Canada",
+        "Mexico",
+        "United States"
+      )
+    ),
+
+  qualification_perf =
+    0.5,
+
+  qualification_gd =
+    0
+)
+
+
+qualification_2026 <- qualification_2026 |>
+  anti_join(
+    automatic_2026,
+    by = "team_key"
+  ) |>
+  bind_rows(
+    automatic_2026
+  )
+
+
+wc26_matches <- wc26_matches |>
+  left_join(
+    qualification_2026 |>
+      select(
+        home_team_key =
+          team_key,
+
+        home_qualification_perf =
+          qualification_perf,
+
+        home_qualification_gd =
+          qualification_gd
+      ),
+    by = "home_team_key"
+  ) |>
+  left_join(
+    qualification_2026 |>
+      select(
+        away_team_key =
+          team_key,
+
+        away_qualification_perf =
+          qualification_perf,
+
+        away_qualification_gd =
+          qualification_gd
+      ),
+    by = "away_team_key"
+  ) |>
+  mutate(
+    qualification_perf_diff =
+      home_qualification_perf -
+      away_qualification_perf,
+
+    qualification_gd_diff =
+      home_qualification_gd -
+      away_qualification_gd
+  )
+
+
+# ============================================================
+# FINAL 2026 DATA
+# ============================================================
+
+predictors <- c(
+  "wc_win_rate_diff",
+  "wc_gf_pg_diff",
+  "wc_ga_pg_diff",
+  "wc_appearances_diff",
+  "previous_finish_diff",
+  "h2h_win_pct",
+  "h2h_matches",
+  "host_advantage",
+  "home_confederation",
+  "away_confederation",
+  "defending_champion_diff",
+  "avg_squad_age_diff",
+  "squad_wc_experience_diff",
+  "elo_diff",
+  "avg_caps_diff",
+  "qualification_perf_diff",
+  "qualification_gd_diff"
+)
+
+
+world_cup_2026_data <- wc26_matches |>
+  select(
+    tournament_id,
+    year,
+    match_id,
+    match_date,
+
+    home_team_code,
+    home_team_name,
+    away_team_code,
+    away_team_name,
+
+    home_team_score,
+    away_team_score,
+
+    all_of(
+      predictors
+    ),
+
+    match_result
+  ) |>
+  mutate(
+    split =
+      "Testing"
+  )
+
+
+# ============================================================
+# CLEAN HISTORICAL MODELING DATA
+# ============================================================
+
+historical_model_data <- historical_data |>
+  mutate(
+    match_result =
+      case_when(
+
+        home_team_score >
+          away_team_score ~
+          "Home Win",
+
+        home_team_score <
+          away_team_score ~
+          "Away Win",
+
+        TRUE ~
+          "Draw"
+      ),
+
+    split =
+      if_else(
+        year <= 2018,
+        "Training",
+        "Testing"
+      )
+  ) |>
+  select(
+    tournament_id,
+    year,
+    match_id,
+    match_date,
+
+    home_team_code,
+    home_team_name,
+    away_team_code,
+    away_team_name,
+
+    home_team_score,
+    away_team_score,
+
+    all_of(
+      predictors
+    ),
+
+    match_result,
+    split
+  )
+
+
+# ============================================================
+# COMBINE 1990-2022 + 2026
+# ============================================================
+
+world_cup_final <- bind_rows(
+  historical_model_data,
+  world_cup_2026_data
+) |>
+  mutate(
+    match_result =
+      factor(
+        match_result,
+        levels = c(
+          "Home Win",
+          "Draw",
+          "Away Win"
+        )
+      )
+  ) |>
+  arrange(
+    year,
+    match_date,
+    match_id
+  )
+
+
+# ============================================================
+# FINAL TESTS
+# ============================================================
+
+# 2026 should have 104 matches
+nrow(
+  world_cup_2026_data
+)
+
+
+# Full dataset should have 656 matches
+nrow(
+  world_cup_final
+)
+
+
+# Expected tournament counts
+world_cup_final |>
+  count(
+    year,
+    split
+  )
+
+
+# Missing predictors
+world_cup_final |>
+  summarise(
+    across(
+      all_of(
+        predictors
+      ),
+      ~ sum(is.na(.))
+    )
+  ) |>
+  pivot_longer(
+    everything(),
+    names_to = "predictor",
+    values_to = "missing"
+  ) |>
+  arrange(
+    desc(missing)
+  )
+
+
+# Duplicate matches
+world_cup_final |>
+  count(
+    year,
+    match_id
+  ) |>
+  filter(
+    n > 1
+  )
+```
+
+```{r}
+write_csv(
+  world_cup_final,
+  "data/world_cup_pre_tournament_predictors.csv"
+)
+```
+
