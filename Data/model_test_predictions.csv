@@ -1,0 +1,169 @@
+year,match_id,home_team_name,away_team_name,actual,full_multinomial,stepwise_multinomial,lda,qda,knn,decision_tree,random_forest,xgboost,ridge_multinomial,elastic_net_multinomial
+2022,M-2022-01,Qatar,Ecuador,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-02,England,Iran,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-03,Senegal,Netherlands,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-04,United States,Wales,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-05,Argentina,Saudi Arabia,Away Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-06,Denmark,Tunisia,Draw,Home Win,Home Win,Home Win,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-07,Mexico,Poland,Draw,Away Win,Home Win,Away Win,Away Win,Away Win,Home Win,Away Win,Home Win,Away Win,Away Win
+2022,M-2022-08,France,Australia,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-09,Morocco,Croatia,Draw,Away Win,Away Win,Away Win,Home Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-10,Germany,Japan,Away Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-11,Spain,Costa Rica,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-12,Belgium,Canada,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-13,Switzerland,Cameroon,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-14,Uruguay,South Korea,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-15,Portugal,Ghana,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-16,Brazil,Serbia,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-17,Wales,Iran,Away Win,Home Win,Away Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-18,Qatar,Senegal,Away Win,Away Win,Away Win,Away Win,Home Win,Home Win,Home Win,Home Win,Away Win,Away Win,Away Win
+2022,M-2022-19,Netherlands,Ecuador,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-20,England,United States,Draw,Home Win,Home Win,Draw,Home Win,Home Win,Home Win,Draw,Draw,Home Win,Home Win
+2022,M-2022-21,Tunisia,Australia,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Home Win,Home Win,Home Win,Away Win,Away Win
+2022,M-2022-22,Poland,Saudi Arabia,Home Win,Home Win,Home Win,Home Win,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-23,France,Denmark,Home Win,Draw,Draw,Draw,Away Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-24,Argentina,Mexico,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-25,Japan,Costa Rica,Away Win,Away Win,Home Win,Away Win,Home Win,Home Win,Home Win,Away Win,Away Win,Away Win,Home Win
+2022,M-2022-26,Belgium,Morocco,Away Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-27,Croatia,Canada,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-28,Spain,Germany,Draw,Away Win,Home Win,Away Win,Away Win,Away Win,Home Win,Away Win,Home Win,Away Win,Away Win
+2022,M-2022-29,Cameroon,Serbia,Draw,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-30,South Korea,Ghana,Away Win,Away Win,Home Win,Away Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-31,Brazil,Switzerland,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-32,Portugal,Uruguay,Home Win,Away Win,Away Win,Away Win,Home Win,Home Win,Home Win,Home Win,Home Win,Away Win,Home Win
+2022,M-2022-33,Ecuador,Senegal,Away Win,Home Win,Home Win,Home Win,Away Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-34,Netherlands,Qatar,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-35,Iran,United States,Away Win,Away Win,Draw,Away Win,Draw,Away Win,Home Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-36,Wales,England,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-37,Australia,Denmark,Home Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-38,Tunisia,France,Home Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-39,Poland,Argentina,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-40,Saudi Arabia,Mexico,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-41,Canada,Morocco,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Home Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-42,Croatia,Belgium,Draw,Away Win,Away Win,Away Win,Away Win,Home Win,Away Win,Away Win,Home Win,Away Win,Away Win
+2022,M-2022-43,Costa Rica,Germany,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-44,Japan,Spain,Home Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-45,Ghana,Uruguay,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-46,South Korea,Portugal,Home Win,Away Win,Away Win,Away Win,Draw,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-47,Cameroon,Brazil,Home Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-48,Serbia,Switzerland,Away Win,Away Win,Away Win,Away Win,Draw,Away Win,Home Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-49,Netherlands,United States,Home Win,Home Win,Home Win,Home Win,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-50,Argentina,Australia,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-51,France,Poland,Home Win,Draw,Draw,Draw,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-52,England,Senegal,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-53,Japan,Croatia,Draw,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-54,Brazil,South Korea,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-55,Morocco,Spain,Draw,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-56,Portugal,Switzerland,Home Win,Home Win,Home Win,Home Win,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-57,Croatia,Brazil,Draw,Away Win,Away Win,Away Win,Draw,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-58,Netherlands,Argentina,Draw,Draw,Away Win,Draw,Away Win,Draw,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-59,Morocco,Portugal,Home Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2022,M-2022-60,England,France,Away Win,Home Win,Home Win,Home Win,Home Win,Away Win,Away Win,Away Win,Away Win,Home Win,Home Win
+2022,M-2022-61,Argentina,Croatia,Home Win,Home Win,Home Win,Home Win,Away Win,Draw,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-62,France,Morocco,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-63,Croatia,Morocco,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2022,M-2022-64,Argentina,France,Draw,Home Win,Home Win,Home Win,Draw,Draw,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-001,Mexico,South Africa,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-002,Korea Republic,Czechia,Home Win,Away Win,Home Win,Away Win,Away Win,Home Win,Home Win,Home Win,Home Win,Away Win,Home Win
+2026,M-2026-003,Canada,Bosnia and Herzegovina,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-004,USA,Paraguay,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Away Win,Away Win,Away Win,Home Win,Home Win
+2026,M-2026-005,Haiti,Scotland,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-006,Australia,Türkiye,Home Win,Draw,Draw,Draw,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-007,Brazil,Morocco,Draw,Home Win,Home Win,Home Win,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-008,Qatar,Switzerland,Draw,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-009,Côte d'Ivoire,Ecuador,Home Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-010,Germany,Curaçao,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-011,Netherlands,Japan,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-012,Sweden,Tunisia,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-013,Saudi Arabia,Uruguay,Draw,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-014,Spain,Cabo Verde,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-015,IR Iran,New Zealand,Draw,Draw,Home Win,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Draw,Draw
+2026,M-2026-016,Belgium,Egypt,Draw,Home Win,Home Win,Home Win,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-017,France,Senegal,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-018,Iraq,Norway,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-019,Argentina,Algeria,Home Win,Home Win,Home Win,Home Win,Away Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-020,Austria,Jordan,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-021,Ghana,Panama,Home Win,Draw,Home Win,Draw,Home Win,Home Win,Away Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-022,England,Croatia,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-023,Portugal,Congo DR,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-024,Uzbekistan,Colombia,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-025,Czechia,South Africa,Draw,Home Win,Home Win,Home Win,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-026,Switzerland,Bosnia and Herzegovina,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-027,Canada,Qatar,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-028,Mexico,Korea Republic,Home Win,Home Win,Home Win,Home Win,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-029,Brazil,Haiti,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-030,Scotland,Morocco,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Home Win,Away Win,Away Win
+2026,M-2026-031,Türkiye,Paraguay,Away Win,Away Win,Away Win,Home Win,Away Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-032,USA,Australia,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Away Win,Home Win,Draw,Home Win,Home Win
+2026,M-2026-033,Germany,Côte d'Ivoire,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-034,Ecuador,Curaçao,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-035,Netherlands,Sweden,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-036,Tunisia,Japan,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-037,Uruguay,Cabo Verde,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-038,Spain,Saudi Arabia,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-039,Belgium,IR Iran,Draw,Home Win,Home Win,Home Win,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-040,New Zealand,Egypt,Away Win,Draw,Away Win,Draw,Home Win,Away Win,Away Win,Away Win,Away Win,Draw,Draw
+2026,M-2026-041,Norway,Senegal,Home Win,Home Win,Home Win,Home Win,Home Win,Away Win,Home Win,Home Win,Away Win,Home Win,Home Win
+2026,M-2026-042,France,Iraq,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-043,Argentina,Austria,Home Win,Draw,Draw,Home Win,Away Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-044,Jordan,Algeria,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Draw,Away Win,Away Win
+2026,M-2026-045,England,Ghana,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-046,Panama,Croatia,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-047,Portugal,Uzbekistan,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-048,Colombia,Congo DR,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-049,Scotland,Brazil,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-050,Morocco,Haiti,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Draw,Home Win,Home Win,Home Win
+2026,M-2026-051,Switzerland,Canada,Home Win,Away Win,Home Win,Away Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-052,Bosnia and Herzegovina,Qatar,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-053,Czechia,Mexico,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-054,South Africa,Korea Republic,Home Win,Away Win,Away Win,Away Win,Draw,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-055,Curaçao,Côte d'Ivoire,Away Win,Draw,Away Win,Draw,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-056,Ecuador,Germany,Home Win,Away Win,Away Win,Away Win,Away Win,Away Win,Home Win,Away Win,Home Win,Away Win,Away Win
+2026,M-2026-057,Japan,Sweden,Draw,Away Win,Home Win,Away Win,Away Win,Home Win,Home Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-058,Tunisia,Netherlands,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-059,Türkiye,USA,Home Win,Away Win,Away Win,Away Win,Away Win,Away Win,Home Win,Home Win,Home Win,Away Win,Away Win
+2026,M-2026-060,Paraguay,Australia,Draw,Home Win,Away Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-061,Norway,France,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-062,Senegal,Iraq,Home Win,Home Win,Home Win,Home Win,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-063,Egypt,IR Iran,Draw,Home Win,Away Win,Home Win,Away Win,Away Win,Away Win,Draw,Away Win,Away Win,Away Win
+2026,M-2026-064,New Zealand,Belgium,Away Win,Draw,Away Win,Draw,Away Win,Away Win,Away Win,Away Win,Away Win,Draw,Draw
+2026,M-2026-065,Cabo Verde,Saudi Arabia,Draw,Draw,Away Win,Away Win,Away Win,Away Win,Home Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-066,Uruguay,Spain,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-067,Panama,England,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-068,Croatia,Ghana,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Draw,Draw,Home Win,Home Win
+2026,M-2026-069,Algeria,Austria,Draw,Away Win,Away Win,Away Win,Home Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-070,Jordan,Argentina,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-071,Colombia,Portugal,Draw,Away Win,Away Win,Away Win,Away Win,Draw,Home Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-072,Congo DR,Uzbekistan,Home Win,Away Win,Away Win,Away Win,Away Win,Home Win,Away Win,Home Win,Away Win,Away Win,Away Win
+2026,M-2026-073,South Africa,Canada,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-074,Germany,Paraguay,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-075,Netherlands,Morocco,Draw,Home Win,Home Win,Home Win,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-076,Brazil,Japan,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-077,France,Sweden,Home Win,Home Win,Home Win,Home Win,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-078,Côte d'Ivoire,Norway,Away Win,Away Win,Away Win,Away Win,Home Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-079,Mexico,Ecuador,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Away Win,Away Win,Home Win,Home Win,Home Win
+2026,M-2026-080,England,Congo DR,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-081,USA,Bosnia and Herzegovina,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-082,Belgium,Senegal,Home Win,Home Win,Home Win,Home Win,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-083,Portugal,Croatia,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-084,Spain,Austria,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-085,Switzerland,Algeria,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-086,Argentina,Cabo Verde,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-087,Colombia,Ghana,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-088,Australia,Egypt,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-089,Paraguay,France,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-090,Canada,Morocco,Away Win,Draw,Home Win,Draw,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-091,Brazil,Norway,Away Win,Home Win,Home Win,Home Win,Away Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-092,Mexico,England,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-093,Portugal,Spain,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Draw,Away Win,Away Win,Away Win
+2026,M-2026-094,USA,Belgium,Away Win,Away Win,Away Win,Away Win,Draw,Home Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-095,Argentina,Egypt,Home Win,Home Win,Home Win,Home Win,Away Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-096,Switzerland,Colombia,Draw,Home Win,Home Win,Home Win,Home Win,Home Win,Away Win,Home Win,Away Win,Home Win,Home Win
+2026,M-2026-097,France,Morocco,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-098,Spain,Belgium,Home Win,Home Win,Home Win,Home Win,Away Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-099,Norway,England,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win,Away Win
+2026,M-2026-100,Argentina,Switzerland,Home Win,Draw,Draw,Draw,Away Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-101,France,Spain,Away Win,Away Win,Away Win,Away Win,Home Win,Home Win,Away Win,Draw,Away Win,Home Win,Away Win
+2026,M-2026-102,England,Argentina,Away Win,Home Win,Home Win,Home Win,Draw,Home Win,Away Win,Home Win,Away Win,Home Win,Home Win
+2026,M-2026-103,France,England,Away Win,Home Win,Home Win,Home Win,Draw,Draw,Home Win,Home Win,Home Win,Home Win,Home Win
+2026,M-2026-104,Spain,Argentina,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win,Home Win

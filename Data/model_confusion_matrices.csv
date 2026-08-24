@@ -1,0 +1,100 @@
+model,Actual,Predicted,Freq
+Full Multinomial,Home Win,Home Win,59
+Full Multinomial,Draw,Home Win,23
+Full Multinomial,Away Win,Home Win,9
+Full Multinomial,Home Win,Draw,6
+Full Multinomial,Draw,Draw,3
+Full Multinomial,Away Win,Draw,4
+Full Multinomial,Home Win,Away Win,14
+Full Multinomial,Draw,Away Win,13
+Full Multinomial,Away Win,Away Win,37
+Stepwise Multinomial,Home Win,Home Win,62
+Stepwise Multinomial,Draw,Home Win,25
+Stepwise Multinomial,Away Win,Home Win,11
+Stepwise Multinomial,Home Win,Draw,5
+Stepwise Multinomial,Draw,Draw,0
+Stepwise Multinomial,Away Win,Draw,1
+Stepwise Multinomial,Home Win,Away Win,12
+Stepwise Multinomial,Draw,Away Win,14
+Stepwise Multinomial,Away Win,Away Win,38
+LDA,Home Win,Home Win,60
+LDA,Draw,Home Win,22
+LDA,Away Win,Home Win,10
+LDA,Home Win,Draw,5
+LDA,Draw,Draw,3
+LDA,Away Win,Draw,4
+LDA,Home Win,Away Win,14
+LDA,Draw,Away Win,14
+LDA,Away Win,Away Win,36
+QDA,Home Win,Home Win,51
+QDA,Draw,Home Win,18
+QDA,Away Win,Home Win,11
+QDA,Home Win,Draw,10
+QDA,Draw,Draw,8
+QDA,Away Win,Draw,5
+QDA,Home Win,Away Win,18
+QDA,Draw,Away Win,13
+QDA,Away Win,Away Win,34
+KNN (k=29),Home Win,Home Win,66
+KNN (k=29),Draw,Home Win,24
+KNN (k=29),Away Win,Home Win,13
+KNN (k=29),Home Win,Draw,1
+KNN (k=29),Draw,Draw,3
+KNN (k=29),Away Win,Draw,1
+KNN (k=29),Home Win,Away Win,12
+KNN (k=29),Draw,Away Win,12
+KNN (k=29),Away Win,Away Win,36
+Decision Tree,Home Win,Home Win,65
+Decision Tree,Draw,Home Win,27
+Decision Tree,Away Win,Home Win,15
+Decision Tree,Home Win,Draw,0
+Decision Tree,Draw,Draw,0
+Decision Tree,Away Win,Draw,0
+Decision Tree,Home Win,Away Win,14
+Decision Tree,Draw,Away Win,12
+Decision Tree,Away Win,Away Win,35
+Random Forest,Home Win,Home Win,65
+Random Forest,Draw,Home Win,22
+Random Forest,Away Win,Home Win,12
+Random Forest,Home Win,Draw,2
+Random Forest,Draw,Draw,2
+Random Forest,Away Win,Draw,2
+Random Forest,Home Win,Away Win,12
+Random Forest,Draw,Away Win,15
+Random Forest,Away Win,Away Win,36
+XGBoost,Home Win,Home Win,65
+XGBoost,Draw,Home Win,24
+XGBoost,Away Win,Home Win,11
+XGBoost,Home Win,Draw,2
+XGBoost,Draw,Draw,1
+XGBoost,Away Win,Draw,1
+XGBoost,Home Win,Away Win,12
+XGBoost,Draw,Away Win,14
+XGBoost,Away Win,Away Win,38
+Ridge Multinomial,Home Win,Home Win,65
+Ridge Multinomial,Draw,Home Win,22
+Ridge Multinomial,Away Win,Home Win,12
+Ridge Multinomial,Home Win,Draw,0
+Ridge Multinomial,Draw,Draw,1
+Ridge Multinomial,Away Win,Draw,2
+Ridge Multinomial,Home Win,Away Win,14
+Ridge Multinomial,Draw,Away Win,16
+Ridge Multinomial,Away Win,Away Win,36
+Elastic Net Multinomial,Home Win,Home Win,67
+Elastic Net Multinomial,Draw,Home Win,22
+Elastic Net Multinomial,Away Win,Home Win,12
+Elastic Net Multinomial,Home Win,Draw,0
+Elastic Net Multinomial,Draw,Draw,1
+Elastic Net Multinomial,Away Win,Draw,2
+Elastic Net Multinomial,Home Win,Away Win,12
+Elastic Net Multinomial,Draw,Away Win,16
+Elastic Net Multinomial,Away Win,Away Win,36
+Majority Baseline,Home Win,Home Win,79
+Majority Baseline,Draw,Home Win,39
+Majority Baseline,Away Win,Home Win,50
+Majority Baseline,Home Win,Draw,0
+Majority Baseline,Draw,Draw,0
+Majority Baseline,Away Win,Draw,0
+Majority Baseline,Home Win,Away Win,0
+Majority Baseline,Draw,Away Win,0
+Majority Baseline,Away Win,Away Win,0

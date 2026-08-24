@@ -1,0 +1,82 @@
+class,predictor,coefficient
+Away Win,elo_diff,-0.2499217924539147
+Away Win,home_confederationAFC,0.19752108836443893
+Away Win,wc_appearances_diff,-0.09807987371726892
+Away Win,wc_gf_pg_diff,-0.07781562596163627
+Away Win,host_advantage,-0.07215791395800461
+Away Win,(Intercept),-0.07009527751853284
+Away Win,avg_caps_diff,0.06492237344547844
+Away Win,away_confederationCONMEBOL,0.05848561137880724
+Away Win,wc_ga_pg_diff,0.05155081038444921
+Away Win,wc_win_rate_diff,-0.037770391839773314
+Away Win,home_confederationUEFA,-0.03295303394514468
+Away Win,squad_wc_experience_diff,-0.032047835312982484
+Away Win,previous_finish_diff,-0.011120143215752939
+Away Win,home_confederationCONCACAF,0.007247743568864397
+Away Win,h2h_win_pct,0
+Away Win,h2h_matches,0
+Away Win,home_confederationCAF,0
+Away Win,home_confederationCONMEBOL,0
+Away Win,home_confederationOFC,0
+Away Win,away_confederationCAF,0
+Away Win,away_confederationCONCACAF,0
+Away Win,away_confederationOFC,0
+Away Win,away_confederationUEFA,0
+Away Win,defending_champion_diff,0
+Away Win,avg_squad_age_diff,0
+Away Win,qualification_perf_diff,0
+Away Win,qualification_gd_diff,0
+Draw,away_confederationOFC,1.4917471608094388
+Draw,home_confederationOFC,1.338318332937423
+Draw,(Intercept),-0.26501886173812017
+Draw,wc_ga_pg_diff,-0.056086934169293105
+Draw,squad_wc_experience_diff,0.011196015433917201
+Draw,away_confederationCONMEBOL,-0.0069089361357826
+Draw,avg_squad_age_diff,0.0021186967181206382
+Draw,wc_win_rate_diff,0
+Draw,wc_gf_pg_diff,0
+Draw,wc_appearances_diff,0
+Draw,previous_finish_diff,0
+Draw,h2h_win_pct,0
+Draw,h2h_matches,0
+Draw,host_advantage,0
+Draw,home_confederationAFC,0
+Draw,home_confederationCAF,0
+Draw,home_confederationCONCACAF,0
+Draw,home_confederationCONMEBOL,0
+Draw,home_confederationUEFA,0
+Draw,away_confederationCAF,0
+Draw,away_confederationCONCACAF,0
+Draw,away_confederationUEFA,0
+Draw,defending_champion_diff,0
+Draw,elo_diff,0
+Draw,avg_caps_diff,0
+Draw,qualification_perf_diff,0
+Draw,qualification_gd_diff,0
+Home Win,(Intercept),0.335114139256653
+Home Win,elo_diff,0.27704588422504806
+Home Win,wc_appearances_diff,0.27113829664555694
+Home Win,home_confederationCONCACAF,-0.18365199485231046
+Home Win,away_confederationOFC,-0.15022839660579265
+Home Win,defending_champion_diff,-0.13579816527123564
+Home Win,wc_gf_pg_diff,0.1211389494215169
+Home Win,avg_squad_age_diff,-0.11310982162899112
+Home Win,host_advantage,0.09715919967360195
+Home Win,away_confederationUEFA,-0.09607260142914581
+Home Win,h2h_matches,-0.03463488088964443
+Home Win,home_confederationCONMEBOL,0.0011980769827684412
+Home Win,wc_win_rate_diff,0
+Home Win,wc_ga_pg_diff,0
+Home Win,previous_finish_diff,0
+Home Win,h2h_win_pct,0
+Home Win,home_confederationAFC,0
+Home Win,home_confederationCAF,0
+Home Win,home_confederationOFC,0
+Home Win,home_confederationUEFA,0
+Home Win,away_confederationCAF,0
+Home Win,away_confederationCONCACAF,0
+Home Win,away_confederationCONMEBOL,0
+Home Win,squad_wc_experience_diff,0
+Home Win,avg_caps_diff,0
+Home Win,qualification_perf_diff,0
+Home Win,qualification_gd_diff,0

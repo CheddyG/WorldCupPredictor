@@ -1,0 +1,1082 @@
+---
+title: "World Cup Model Analysis"
+author: "Edgar Gonzalez Martinez"
+date: today
+format:
+  html:
+    toc: true
+    code-fold: true
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+library(tidyverse)
+library(nnet)
+
+if (!requireNamespace("glmnet", quietly = TRUE)) {
+  stop("Package 'glmnet' is required. Install it with install.packages('glmnet').")
+}
+
+set.seed(131)
+```
+
+# Load Data
+
+```{r}
+world_cup <- read_csv(
+  "data/world_cup_pre_tournament_predictors.csv",
+  show_col_types = FALSE
+)
+
+train_data <- world_cup |>
+  filter(split == "Training") |>
+  mutate(
+    match_result = factor(
+      match_result,
+      levels = c("Home Win", "Draw", "Away Win")
+    ),
+    home_confederation = factor(home_confederation),
+    away_confederation = factor(away_confederation)
+  )
+
+test_data <- world_cup |>
+  filter(split == "Testing") |>
+  mutate(
+    match_result = factor(
+      match_result,
+      levels = levels(train_data$match_result)
+    ),
+    home_confederation = factor(
+      home_confederation,
+      levels = levels(train_data$home_confederation)
+    ),
+    away_confederation = factor(
+      away_confederation,
+      levels = levels(train_data$away_confederation)
+    )
+  )
+```
+
+# Predictor Setup
+
+```{r}
+all_predictors <- c(
+  "wc_win_rate_diff",
+  "wc_gf_pg_diff",
+  "wc_ga_pg_diff",
+  "wc_appearances_diff",
+  "previous_finish_diff",
+  "h2h_win_pct",
+  "h2h_matches",
+  "host_advantage",
+  "home_confederation",
+  "away_confederation",
+  "defending_champion_diff",
+  "avg_squad_age_diff",
+  "squad_wc_experience_diff",
+  "elo_diff",
+  "avg_caps_diff",
+  "qualification_perf_diff",
+  "qualification_gd_diff"
+)
+
+numeric_predictors <- setdiff(
+  all_predictors,
+  c("home_confederation", "away_confederation")
+)
+
+full_formula <- reformulate(
+  all_predictors,
+  response = "match_result"
+)
+
+qda_formula <- reformulate(
+  numeric_predictors,
+  response = "match_result"
+)
+```
+
+# Standardize Numeric Predictors
+
+Scaling is based only on the training set.
+
+```{r}
+train_means <- train_data |>
+  summarise(
+    across(
+      all_of(numeric_predictors),
+      mean
+    )
+  )
+
+train_sds <- train_data |>
+  summarise(
+    across(
+      all_of(numeric_predictors),
+      sd
+    )
+  )
+
+train_scaled <- train_data
+test_scaled <- test_data
+
+for (x in numeric_predictors) {
+  train_scaled[[x]] <-
+    (train_scaled[[x]] - train_means[[x]]) /
+    train_sds[[x]]
+
+  test_scaled[[x]] <-
+    (test_scaled[[x]] - train_means[[x]]) /
+    train_sds[[x]]
+}
+
+stopifnot(
+  nrow(train_scaled) == 488,
+  nrow(test_scaled) == 168,
+  sum(is.na(train_scaled)) == 0,
+  sum(is.na(test_scaled)) == 0
+)
+```
+
+# Evaluation Function
+
+```{r}
+evaluate_model <- function(
+    model_name,
+    actual,
+    predicted,
+    probabilities = NULL) {
+
+  predicted <- factor(
+    predicted,
+    levels = levels(actual)
+  )
+
+  confusion <- table(
+    Actual = actual,
+    Predicted = predicted
+  )
+
+  accuracy <- sum(diag(confusion)) / sum(confusion)
+
+  recall <- diag(confusion) / rowSums(confusion)
+  precision <- diag(confusion) / colSums(confusion)
+
+  precision[is.na(precision)] <- 0
+  recall[is.na(recall)] <- 0
+
+  f1 <- ifelse(
+    precision + recall == 0,
+    0,
+    2 * precision * recall / (precision + recall)
+  )
+
+  macro_f1 <- mean(f1)
+  balanced_accuracy <- mean(recall)
+
+  log_loss <- NA_real_
+
+  if (!is.null(probabilities)) {
+    probabilities <- as.matrix(probabilities)
+
+    probabilities <- probabilities[
+      ,
+      levels(actual),
+      drop = FALSE
+    ]
+
+    actual_column <- match(
+      as.character(actual),
+      colnames(probabilities)
+    )
+
+    actual_probability <- probabilities[
+      cbind(
+        seq_along(actual),
+        actual_column
+      )
+    ]
+
+    actual_probability <- pmax(
+      actual_probability,
+      1e-15
+    )
+
+    log_loss <- -mean(log(actual_probability))
+  }
+
+  list(
+    overall = tibble(
+      model = model_name,
+      accuracy = accuracy,
+      macro_f1 = macro_f1,
+      balanced_accuracy = balanced_accuracy,
+      log_loss = log_loss
+    ),
+
+    class = tibble(
+      model = model_name,
+      class = names(recall),
+      precision = as.numeric(precision),
+      recall = as.numeric(recall),
+      f1 = as.numeric(f1)
+    ),
+
+    confusion = as.data.frame(confusion) |>
+      as_tibble() |>
+      mutate(model = model_name) |>
+      relocate(model)
+  )
+}
+
+results <- list()
+```
+
+# Multinomial Logistic Regression
+
+## Full Model
+
+```{r}
+full_model <- multinom(
+  full_formula,
+  data = train_scaled,
+  trace = FALSE
+)
+
+full_pred <- predict(
+  full_model,
+  newdata = test_scaled,
+  type = "class"
+)
+
+full_prob <- predict(
+  full_model,
+  newdata = test_scaled,
+  type = "probs"
+)
+
+results[["Full Multinomial"]] <- evaluate_model(
+  "Full Multinomial",
+  test_scaled$match_result,
+  full_pred,
+  full_prob
+)
+```
+
+## Stepwise Model
+
+```{r}
+step_model <- MASS::stepAIC(
+  full_model,
+  direction = "backward",
+  trace = FALSE
+)
+
+step_pred <- predict(
+  step_model,
+  newdata = test_scaled,
+  type = "class"
+)
+
+step_prob <- predict(
+  step_model,
+  newdata = test_scaled,
+  type = "probs"
+)
+
+results[["Stepwise Multinomial"]] <- evaluate_model(
+  "Stepwise Multinomial",
+  test_scaled$match_result,
+  step_pred,
+  step_prob
+)
+```
+
+# Discriminant Analysis
+
+## LDA
+
+```{r}
+lda_model <- MASS::lda(
+  full_formula,
+  data = train_scaled
+)
+
+lda_output <- predict(
+  lda_model,
+  newdata = test_scaled
+)
+
+lda_pred <- lda_output$class
+lda_prob <- lda_output$posterior
+
+results[["LDA"]] <- evaluate_model(
+  "LDA",
+  test_scaled$match_result,
+  lda_pred,
+  lda_prob
+)
+```
+
+## QDA
+
+QDA uses only numeric predictors because sparse factor levels can cause singular class covariance matrices.
+
+```{r}
+qda_model <- MASS::qda(
+  qda_formula,
+  data = train_scaled
+)
+
+qda_output <- predict(
+  qda_model,
+  newdata = test_scaled
+)
+
+qda_pred <- qda_output$class
+qda_prob <- qda_output$posterior
+
+results[["QDA"]] <- evaluate_model(
+  "QDA",
+  test_scaled$match_result,
+  qda_pred,
+  qda_prob
+)
+```
+
+# Model Matrices and Tournament Folds
+
+```{r}
+train_x <- model.matrix(
+  ~ . - 1,
+  data = train_scaled |>
+    select(all_of(all_predictors))
+)
+
+test_x <- model.matrix(
+  ~ . - 1,
+  data = test_scaled |>
+    select(all_of(all_predictors))
+)
+
+train_y <- train_scaled$match_result
+test_y <- test_scaled$match_result
+
+training_years <- sort(
+  unique(train_scaled$year)
+)
+
+year_fold <- tibble(
+  year = training_years,
+  fold = rep(
+    1:5,
+    length.out = length(training_years)
+  )
+)
+
+fold_id <- year_fold$fold[
+  match(
+    train_scaled$year,
+    year_fold$year
+  )
+]
+```
+
+# K-Nearest Neighbors
+
+```{r}
+k_grid <- seq(
+  3,
+  31,
+  by = 2
+)
+
+knn_cv_accuracy <- numeric(
+  length(k_grid)
+)
+
+for (j in seq_along(k_grid)) {
+  k <- k_grid[j]
+  fold_accuracy <- numeric(5)
+
+  for (fold in 1:5) {
+    validation_rows <- which(
+      fold_id == fold
+    )
+
+    cv_pred <- class::knn(
+      train = train_x[-validation_rows, ],
+      test = train_x[validation_rows, ],
+      cl = train_y[-validation_rows],
+      k = k
+    )
+
+    fold_accuracy[fold] <- mean(
+      cv_pred == train_y[validation_rows]
+    )
+  }
+
+  knn_cv_accuracy[j] <- mean(
+    fold_accuracy
+  )
+}
+
+knn_cv_results <- tibble(
+  k = k_grid,
+  cv_accuracy = knn_cv_accuracy
+)
+
+best_k <- knn_cv_results |>
+  slice_max(
+    cv_accuracy,
+    n = 1,
+    with_ties = FALSE
+  ) |>
+  pull(k)
+
+knn_prob <- matrix(
+  0,
+  nrow = nrow(test_x),
+  ncol = length(levels(train_y))
+)
+
+colnames(knn_prob) <- levels(train_y)
+
+for (i in seq_len(nrow(test_x))) {
+  distances <- rowSums(
+    sweep(
+      train_x,
+      2,
+      test_x[i, ],
+      "-"
+    )^2
+  )
+
+  neighbors <- order(
+    distances
+  )[1:best_k]
+
+  neighbor_classes <- factor(
+    train_y[neighbors],
+    levels = levels(train_y)
+  )
+
+  knn_prob[i, ] <-
+    as.numeric(
+      table(neighbor_classes)
+    ) / best_k
+}
+
+knn_pred <- factor(
+  colnames(knn_prob)[
+    max.col(
+      knn_prob,
+      ties.method = "first"
+    )
+  ],
+  levels = levels(train_y)
+)
+
+results[["KNN"]] <- evaluate_model(
+  paste0("KNN (k=", best_k, ")"),
+  test_y,
+  knn_pred,
+  knn_prob
+)
+```
+
+# Decision Tree
+
+```{r}
+tree_model <- rpart::rpart(
+  full_formula,
+  data = train_scaled,
+  method = "class",
+  control = rpart::rpart.control(
+    cp = 0.001,
+    xval = 10
+  )
+)
+
+best_cp <- tree_model$cptable[
+  which.min(
+    tree_model$cptable[, "xerror"]
+  ),
+  "CP"
+]
+
+tree_model <- rpart::prune(
+  tree_model,
+  cp = best_cp
+)
+
+tree_pred <- predict(
+  tree_model,
+  newdata = test_scaled,
+  type = "class"
+)
+
+tree_prob <- predict(
+  tree_model,
+  newdata = test_scaled,
+  type = "prob"
+)
+
+results[["Decision Tree"]] <- evaluate_model(
+  "Decision Tree",
+  test_y,
+  tree_pred,
+  tree_prob
+)
+```
+
+# Random Forest
+
+```{r}
+set.seed(131)
+
+rf_model <- randomForest::randomForest(
+  full_formula,
+  data = train_scaled,
+  ntree = 500,
+  importance = TRUE
+)
+
+rf_pred <- predict(
+  rf_model,
+  newdata = test_scaled,
+  type = "response"
+)
+
+rf_prob <- predict(
+  rf_model,
+  newdata = test_scaled,
+  type = "prob"
+)
+
+results[["Random Forest"]] <- evaluate_model(
+  "Random Forest",
+  test_y,
+  rf_pred,
+  rf_prob
+)
+```
+
+# XGBoost
+
+```{r}
+set.seed(131)
+
+xgb_y <- as.integer(train_y) - 1
+
+dtrain <- xgboost::xgb.DMatrix(
+  data = train_x,
+  label = xgb_y
+)
+
+xgb_params <- list(
+  objective = "multi:softprob",
+  num_class = 3,
+  eval_metric = "mlogloss",
+  max_depth = 4,
+  eta = 0.05,
+  subsample = 0.8,
+  colsample_bytree = 0.8
+)
+
+xgb_folds <- lapply(
+  sort(unique(fold_id)),
+  function(f) {
+    which(fold_id == f)
+  }
+)
+
+xgb_cv <- xgboost::xgb.cv(
+  params = xgb_params,
+  data = dtrain,
+  nrounds = 500,
+  folds = xgb_folds,
+  early_stopping_rounds = 25,
+  verbose = 0
+)
+
+best_rounds <- xgb_cv$early_stop$best_iteration
+
+if (
+  is.null(best_rounds) ||
+  length(best_rounds) == 0
+) {
+  best_rounds <- which.min(
+    xgb_cv$evaluation_log$test_mlogloss_mean
+  )
+}
+
+xgb_model <- xgboost::xgb.train(
+  params = xgb_params,
+  data = dtrain,
+  nrounds = best_rounds,
+  verbose = 0
+)
+
+raw_prob <- predict(
+  xgb_model,
+  newdata = test_x
+)
+
+if (is.matrix(raw_prob)) {
+  xgb_prob <- raw_prob
+} else {
+  xgb_prob <- matrix(
+    raw_prob,
+    ncol = 3,
+    byrow = TRUE
+  )
+}
+
+colnames(xgb_prob) <- levels(test_y)
+
+xgb_pred <- factor(
+  colnames(xgb_prob)[
+    max.col(
+      xgb_prob,
+      ties.method = "first"
+    )
+  ],
+  levels = levels(test_y)
+)
+
+results[["XGBoost"]] <- evaluate_model(
+  "XGBoost",
+  test_y,
+  xgb_pred,
+  xgb_prob
+)
+```
+
+# Regularized Multinomial Regression
+
+## Ridge
+
+```{r}
+set.seed(131)
+
+ridge_cv <- glmnet::cv.glmnet(
+  x = train_x,
+  y = train_y,
+  family = "multinomial",
+  alpha = 0,
+  foldid = fold_id,
+  type.measure = "deviance"
+)
+
+ridge_lambda <- ridge_cv$lambda.min
+
+ridge_model <- glmnet::glmnet(
+  x = train_x,
+  y = train_y,
+  family = "multinomial",
+  alpha = 0,
+  lambda = ridge_lambda
+)
+
+ridge_prob <- predict(
+  ridge_model,
+  newx = test_x,
+  s = ridge_lambda,
+  type = "response"
+)[, , 1]
+
+colnames(ridge_prob) <- levels(train_y)
+
+ridge_pred <- factor(
+  colnames(ridge_prob)[
+    max.col(
+      ridge_prob,
+      ties.method = "first"
+    )
+  ],
+  levels = levels(test_y)
+)
+
+results[["Ridge Multinomial"]] <- evaluate_model(
+  "Ridge Multinomial",
+  test_y,
+  ridge_pred,
+  ridge_prob
+)
+```
+
+## Elastic Net
+
+```{r}
+set.seed(131)
+
+elastic_alpha_grid <- c(
+  0.25,
+  0.50,
+  0.75
+)
+
+elastic_cv_results <- map_dfr(
+  elastic_alpha_grid,
+  function(a) {
+    fit <- glmnet::cv.glmnet(
+      x = train_x,
+      y = train_y,
+      family = "multinomial",
+      alpha = a,
+      foldid = fold_id,
+      type.measure = "deviance"
+    )
+
+    tibble(
+      alpha = a,
+      lambda = fit$lambda.min,
+      cv_deviance = min(fit$cvm)
+    )
+  }
+)
+
+best_elastic <- elastic_cv_results |>
+  slice_min(
+    cv_deviance,
+    n = 1,
+    with_ties = FALSE
+  )
+
+best_elastic_alpha <- best_elastic$alpha
+best_elastic_lambda <- best_elastic$lambda
+
+elastic_model <- glmnet::glmnet(
+  x = train_x,
+  y = train_y,
+  family = "multinomial",
+  alpha = best_elastic_alpha,
+  lambda = best_elastic_lambda
+)
+
+elastic_prob <- predict(
+  elastic_model,
+  newx = test_x,
+  s = best_elastic_lambda,
+  type = "response"
+)[, , 1]
+
+colnames(elastic_prob) <- levels(train_y)
+
+elastic_pred <- factor(
+  colnames(elastic_prob)[
+    max.col(
+      elastic_prob,
+      ties.method = "first"
+    )
+  ],
+  levels = levels(test_y)
+)
+
+results[["Elastic Net Multinomial"]] <- evaluate_model(
+  "Elastic Net Multinomial",
+  test_y,
+  elastic_pred,
+  elastic_prob
+)
+
+elastic_coef <- coef(
+  elastic_model,
+  s = best_elastic_lambda
+)
+
+elastic_coef_table <- bind_rows(
+  lapply(
+    names(elastic_coef),
+    function(class_name) {
+      mat <- as.matrix(
+        elastic_coef[[class_name]]
+      )
+
+      tibble(
+        class = class_name,
+        predictor = rownames(mat),
+        coefficient = as.numeric(mat[, 1])
+      )
+    }
+  )
+) |>
+  arrange(
+    class,
+    desc(abs(coefficient))
+  )
+```
+
+# Majority-Class Baseline
+
+```{r}
+class_proportions <- prop.table(
+  table(train_y)
+)
+
+baseline_class <- names(
+  which.max(class_proportions)
+)
+
+baseline_pred <- factor(
+  rep(
+    baseline_class,
+    length(test_y)
+  ),
+  levels = levels(test_y)
+)
+
+baseline_prob <- matrix(
+  rep(
+    as.numeric(class_proportions),
+    each = length(test_y)
+  ),
+  nrow = length(test_y)
+)
+
+colnames(baseline_prob) <- names(
+  class_proportions
+)
+
+results[["Baseline"]] <- evaluate_model(
+  "Majority Baseline",
+  test_y,
+  baseline_pred,
+  baseline_prob
+)
+```
+
+# Combine Results
+
+```{r}
+overall_results <- bind_rows(
+  lapply(
+    results,
+    function(x) x$overall
+  )
+) |>
+  arrange(
+    desc(accuracy)
+  )
+
+class_results <- bind_rows(
+  lapply(
+    results,
+    function(x) x$class
+  )
+)
+
+confusion_results <- bind_rows(
+  lapply(
+    results,
+    function(x) x$confusion
+  )
+)
+
+multinomial_aic <- tibble(
+  model = c(
+    "Full Multinomial",
+    "Stepwise Multinomial"
+  ),
+  AIC = c(
+    AIC(full_model),
+    AIC(step_model)
+  )
+)
+
+test_predictions <- test_scaled |>
+  transmute(
+    year,
+    match_id,
+    home_team_name,
+    away_team_name,
+    actual = match_result,
+    full_multinomial = full_pred,
+    stepwise_multinomial = step_pred,
+    lda = lda_pred,
+    qda = qda_pred,
+    knn = knn_pred,
+    decision_tree = tree_pred,
+    random_forest = rf_pred,
+    xgboost = xgb_pred,
+    ridge_multinomial = ridge_pred,
+    elastic_net_multinomial = elastic_pred
+  )
+```
+
+# Variable Importance
+
+```{r}
+rf_importance <- randomForest::importance(
+  rf_model
+) |>
+  as.data.frame() |>
+  rownames_to_column("predictor")
+
+xgb_importance <- xgboost::xgb.importance(
+  model = xgb_model
+)
+```
+
+# Save Results
+
+```{r}
+dir.create(
+  "data",
+  showWarnings = FALSE
+)
+
+dir.create(
+  "models",
+  showWarnings = FALSE
+)
+
+write_csv(
+  overall_results,
+  "data/model_comparison_results.csv"
+)
+
+write_csv(
+  class_results,
+  "data/model_class_metrics.csv"
+)
+
+write_csv(
+  confusion_results,
+  "data/model_confusion_matrices.csv"
+)
+
+write_csv(
+  multinomial_aic,
+  "data/multinomial_aic_results.csv"
+)
+
+write_csv(
+  knn_cv_results,
+  "data/knn_cv_results.csv"
+)
+
+write_csv(
+  elastic_cv_results,
+  "data/elastic_net_cv_results.csv"
+)
+
+write_csv(
+  elastic_coef_table,
+  "data/elastic_net_coefficients.csv"
+)
+
+write_csv(
+  test_predictions,
+  "data/model_test_predictions.csv"
+)
+
+write_csv(
+  rf_importance,
+  "data/random_forest_importance.csv"
+)
+
+write_csv(
+  xgb_importance,
+  "data/xgboost_importance.csv"
+)
+
+saveRDS(
+  full_model,
+  "models/full_multinomial.rds"
+)
+
+saveRDS(
+  step_model,
+  "models/stepwise_multinomial.rds"
+)
+
+saveRDS(
+  lda_model,
+  "models/lda_model.rds"
+)
+
+saveRDS(
+  qda_model,
+  "models/qda_model.rds"
+)
+
+saveRDS(
+  tree_model,
+  "models/decision_tree.rds"
+)
+
+saveRDS(
+  rf_model,
+  "models/random_forest.rds"
+)
+
+saveRDS(
+  xgb_model,
+  "models/xgboost.rds"
+)
+
+saveRDS(
+  ridge_model,
+  "models/ridge_multinomial.rds"
+)
+
+saveRDS(
+  elastic_model,
+  "models/elastic_net_multinomial.rds"
+)
+
+saveRDS(
+  list(best_k = best_k),
+  "models/knn_settings.rds"
+)
+```
+
+# Final Results
+
+```{r}
+overall_results
+
+multinomial_aic
+
+formula(step_model)
+
+knn_cv_results
+
+elastic_cv_results
+
+elastic_coef_table
+
+cat(
+  "\nBest KNN k:",
+  best_k,
+  "\n"
+)
+
+cat(
+  "Best XGBoost rounds:",
+  best_rounds,
+  "\n"
+)
+
+cat(
+  "Ridge lambda:",
+  ridge_lambda,
+  "\n"
+)
+
+cat(
+  "Best Elastic Net alpha:",
+  best_elastic_alpha,
+  "\n"
+)
+
+cat(
+  "Best Elastic Net lambda:",
+  best_elastic_lambda,
+  "\n"
+)
+```
